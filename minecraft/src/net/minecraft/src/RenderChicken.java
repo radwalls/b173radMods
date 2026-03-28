@@ -1,12 +1,23 @@
 package net.minecraft.src;
 
+import org.lwjgl.opengl.GL11;
+
 public class RenderChicken extends RenderLiving {
 	public RenderChicken(ModelBase var1, float var2) {
 		super(var1, var2);
 	}
 
 	public void renderChicken(EntityChicken var1, double var2, double var4, double var6, float var8, float var9) {
+		if(var1 instanceof EntitySeagull) {
+			GL11.glColor4f(0.95F, 0.95F, 1.0F, 1.0F);
+		} else if(var1 instanceof EntityCrow) {
+			GL11.glColor4f(0.35F, 0.35F, 0.38F, 1.0F);
+		} else if(var1 instanceof EntityHawk) {
+			GL11.glColor4f(0.72F, 0.58F, 0.34F, 1.0F);
+		}
+
 		super.doRenderLiving(var1, var2, var4, var6, var8, var9);
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 	}
 
 	protected float getWingRotation(EntityChicken var1, float var2) {
