@@ -50,6 +50,10 @@ public class RenderLiving extends Render {
 
 			this.loadDownloadableImageTexture(var1.skinUrl, var1.getEntityTexture());
 			GL11.glEnable(GL11.GL_ALPHA_TEST);
+			if(var1 instanceof EntityMob && ((EntityMob)var1).isRedWaveMob()) {
+				GL11.glColor4f(1.0F, 0.35F, 0.35F, 1.0F);
+			}
+
 			this.mainModel.setLivingAnimations(var1, var16, var15, var9);
 			this.mainModel.render(var16, var15, var13, var11 - var10, var12, var14);
 
@@ -103,6 +107,8 @@ public class RenderLiving extends Render {
 				GL11.glEnable(GL11.GL_ALPHA_TEST);
 				GL11.glEnable(GL11.GL_TEXTURE_2D);
 			}
+
+			GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 
 			GL11.glDisable(GL12.GL_RESCALE_NORMAL);
 		} catch (Exception var24) {

@@ -54,6 +54,7 @@ public class World implements IBlockAccess {
 	private int soundCounter;
 	private List field_1012_M;
 	public boolean multiplayerWorld;
+	private RedWaveSystem redWaveSystem;
 
 	public WorldChunkManager getWorldChunkManager() {
 		return this.worldProvider.worldChunkMgr;
@@ -90,6 +91,7 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.redWaveSystem = new RedWaveSystem();
 		this.saveHandler = var1;
 		this.worldInfo = new WorldInfo(var4, var2);
 		this.worldProvider = var3;
@@ -98,6 +100,7 @@ public class World implements IBlockAccess {
 		this.chunkProvider = this.getChunkProvider();
 		this.calculateInitialSkylight();
 		this.func_27163_E();
+		this.loadRedWaveData();
 	}
 
 	public World(World var1, WorldProvider var2) {
@@ -131,6 +134,7 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.redWaveSystem = new RedWaveSystem();
 		this.lockTimestamp = var1.lockTimestamp;
 		this.saveHandler = var1.saveHandler;
 		this.worldInfo = new WorldInfo(var1.worldInfo);
@@ -140,6 +144,7 @@ public class World implements IBlockAccess {
 		this.chunkProvider = this.getChunkProvider();
 		this.calculateInitialSkylight();
 		this.func_27163_E();
+		this.loadRedWaveData();
 	}
 
 	public World(ISaveHandler var1, String var2, long var3) {
@@ -177,6 +182,7 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.redWaveSystem = new RedWaveSystem();
 		this.saveHandler = var1;
 		this.field_28108_z = new MapStorage(var1);
 		this.worldInfo = var1.loadWorldInfo();
@@ -205,6 +211,14 @@ public class World implements IBlockAccess {
 
 		this.calculateInitialSkylight();
 		this.func_27163_E();
+		this.loadRedWaveData();
+	}
+
+	private void loadRedWaveData() {
+		NBTTagCompound var1 = this.worldInfo.getRedWaveTag();
+		if(var1 != null) {
+			this.redWaveSystem.readFromNBT(var1);
+		}
 	}
 
 	protected IChunkProvider getChunkProvider() {
@@ -292,6 +306,9 @@ public class World implements IBlockAccess {
 
 	private void saveLevel() {
 		this.checkSessionLock();
+		NBTTagCompound var1 = new NBTTagCompound();
+		this.redWaveSystem.writeToNBT(var1);
+		this.worldInfo.setRedWaveTag(var1);
 		this.saveHandler.saveWorldInfoAndPlayer(this.worldInfo, this.playerEntities);
 		this.field_28108_z.saveAllData();
 	}
@@ -382,7 +399,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var5 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				boolean var6 = var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				if(var6 && var4 == 0) {
+					this.redWaveSystem.onBlockRemoved(var1, var2, var3);
+				}
+
+				return var6;
 			}
 		} else {
 			return false;
@@ -1738,7 +1760,9 @@ public class World implements IBlockAccess {
 	public void tick() {
 		this.updateWeather();
 		long var2;
+		boolean var4 = false;
 		if(this.isAllPlayersFullyAsleep()) {
+			var4 = true;
 			boolean var1 = false;
 			if(this.spawnHostileMobs && this.difficultySetting >= 1) {
 				var1 = SpawnerAnimals.performSleepSpawning(this, this.playerEntities);
@@ -1753,12 +1777,12 @@ public class World implements IBlockAccess {
 
 		SpawnerAnimals.performSpawning(this, this.spawnHostileMobs, this.spawnPeacefulMobs);
 		this.chunkProvider.unload100OldestChunks();
-		int var4 = this.calculateSkylightSubtracted(1.0F);
-		if(var4 != this.skylightSubtracted) {
-			this.skylightSubtracted = var4;
+		int var5 = this.calculateSkylightSubtracted(1.0F);
+		if(var5 != this.skylightSubtracted) {
+			this.skylightSubtracted = var5;
 
-			for(int var5 = 0; var5 < this.worldAccesses.size(); ++var5) {
-				((IWorldAccess)this.worldAccesses.get(var5)).updateAllRenderers();
+			for(int var6 = 0; var6 < this.worldAccesses.size(); ++var6) {
+				((IWorldAccess)this.worldAccesses.get(var6)).updateAllRenderers();
 			}
 		}
 
@@ -1768,8 +1792,13 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		this.redWaveSystem.onTick(this, var4);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
+	}
+
+	public RedWaveSystem getRedWaveSystem() {
+		return this.redWaveSystem;
 	}
 
 	private void func_27163_E() {
