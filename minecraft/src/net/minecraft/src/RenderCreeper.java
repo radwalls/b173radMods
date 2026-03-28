@@ -89,7 +89,12 @@ public class RenderCreeper extends RenderLiving {
 	}
 
 	protected int getColorMultiplier(EntityLiving var1, float var2, float var3) {
-		return this.updateCreeperColorMultiplier((EntityCreeper)var1, var2, var3);
+		int var4 = this.updateCreeperColorMultiplier((EntityCreeper)var1, var2, var3);
+		if(var1 instanceof IWaveMob) {
+			return (200 << 24) + (255 << 16) + (32 << 8) + 32;
+		} else {
+			return var4;
+		}
 	}
 
 	protected boolean shouldRenderPass(EntityLiving var1, int var2, float var3) {
