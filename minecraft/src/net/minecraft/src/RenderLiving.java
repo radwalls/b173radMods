@@ -156,6 +156,10 @@ public class RenderLiving extends Render {
 	}
 
 	protected int getColorMultiplier(EntityLiving var1, float var2, float var3) {
+		if(var1 instanceof EntityMob && ((EntityMob)var1).isWaveMob()) {
+			return -2130771968;
+		}
+
 		return 0;
 	}
 

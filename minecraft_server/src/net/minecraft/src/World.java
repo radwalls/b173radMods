@@ -54,6 +54,8 @@ public class World implements IBlockAccess {
 	private int ambientTickCountdown = this.rand.nextInt(12000);
 	private List field_778_L = new ArrayList();
 	public boolean singleplayerWorld = false;
+	private List wavePlacedBlocks = new ArrayList();
+	private int waveNumber = 0;
 
 	public WorldChunkManager getWorldChunkManager() {
 		return this.worldProvider.worldChunkMgr;
@@ -1503,6 +1505,7 @@ public class World implements IBlockAccess {
 		}
 
 		SpawnerAnimals.performSpawning(this, this.spawnHostileMobs, this.spawnPeacefulMobs);
+		this.tickWaveSurvival();
 		this.chunkProvider.func_361_a();
 		int var4 = this.calculateSkylightSubtracted(1.0F);
 		if(var4 != this.skylightSubtracted) {
@@ -1521,6 +1524,143 @@ public class World implements IBlockAccess {
 		this.worldInfo.setWorldTime(var2);
 		this.TickUpdates(false);
 		this.doRandomUpdateTicks();
+	}
+
+	private void tickWaveSurvival() {
+		if(this.playerEntities.isEmpty()) {
+			return;
+		}
+
+		long var1 = this.worldInfo.getWorldTime() + 1L;
+		if(var1 > 0L && var1 % 48000L == 0L) {
+			++this.waveNumber;
+			int var3 = 5 + this.waveNumber * 3;
+
+			for(int var4 = 0; var4 < var3; ++var4) {
+				EntityPlayer var5 = (EntityPlayer)this.playerEntities.get(this.rand.nextInt(this.playerEntities.size()));
+				double var6 = this.rand.nextDouble() * (double)((float)Math.PI) * 2.0D;
+				double var8 = 96.0D + this.rand.nextDouble() * 32.0D;
+				int var10 = MathHelper.floor_double(var5.posX + Math.cos(var6) * var8);
+				int var11 = MathHelper.floor_double(var5.posZ + Math.sin(var6) * var8);
+				int var12 = this.getTopSolidOrLiquidBlock(var10, var11);
+				if(var12 < 1) {
+					var12 = 64;
+				}
+
+				EntityLiving var13 = null;
+				int var14 = this.rand.nextInt(4);
+				if(var14 == 0) {
+					var13 = new EntityZombie(this);
+				} else if(var14 == 1) {
+					var13 = new EntitySkeleton(this);
+				} else if(var14 == 2) {
+					var13 = new EntitySpider(this);
+				} else {
+					var13 = new EntityCreeper(this);
+				}
+
+				var13.setLocationAndAngles((double)var10 + 0.5D, (double)var12, (double)var11 + 0.5D, this.rand.nextFloat() * 360.0F, 0.0F);
+				if(var13 instanceof EntityMob) {
+					((EntityMob)var13).setWaveMob(true);
+				}
+
+				this.entityJoinedWorld(var13);
+			}
+		}
+	}
+
+	public void recordPlayerPlacedBlock(int var1, int var2, int var3) {
+		if(var2 < 0 || var2 >= 128) {
+			return;
+		}
+
+		if(this.getBlockId(var1, var2, var3) == 0) {
+			return;
+		}
+
+		for(int var4 = 0; var4 < this.wavePlacedBlocks.size(); ++var4) {
+			ChunkPosition var5 = (ChunkPosition)this.wavePlacedBlocks.get(var4);
+			if(var5.x == var1 && var5.y == var2 && var5.z == var3) {
+				return;
+			}
+		}
+
+		this.wavePlacedBlocks.add(new ChunkPosition(var1, var2, var3));
+		if(this.wavePlacedBlocks.size() > 4096) {
+			this.wavePlacedBlocks.remove(0);
+		}
+	}
+
+	public ChunkPosition getNearestPlayerPlacedBlock(int var1, int var2, int var3, int var4) {
+		double var5 = (double)(var4 * var4);
+		double var7 = -1.0D;
+		ChunkPosition var9 = null;
+
+		for(int var10 = this.wavePlacedBlocks.size() - 1; var10 >= 0; --var10) {
+			ChunkPosition var11 = (ChunkPosition)this.wavePlacedBlocks.get(var10);
+			if(this.getBlockId(var11.x, var11.y, var11.z) == 0) {
+				this.wavePlacedBlocks.remove(var10);
+			} else {
+				double var12 = (double)((var11.x - var1) * (var11.x - var1) + (var11.y - var2) * (var11.y - var2) + (var11.z - var3) * (var11.z - var3));
+				if(var12 <= var5 && (var7 < 0.0D || var12 < var7)) {
+					var7 = var12;
+					var9 = var11;
+				}
+			}
+		}
+
+		return var9;
+	}
+
+	public ChunkPosition getBestWaveBlockTarget(int var1, int var2, int var3, int var4) {
+		ChunkPosition var5 = null;
+		double var6 = -999999.0D;
+
+		for(int var8 = this.wavePlacedBlocks.size() - 1; var8 >= 0; --var8) {
+			ChunkPosition var9 = (ChunkPosition)this.wavePlacedBlocks.get(var8);
+			if(this.getBlockId(var9.x, var9.y, var9.z) == 0) {
+				this.wavePlacedBlocks.remove(var8);
+			} else {
+				int var10 = var9.x - var1;
+				int var11 = var9.y - var2;
+				int var12 = var9.z - var3;
+				double var13 = (double)(var10 * var10 + var11 * var11 + var12 * var12);
+				if(var13 <= (double)(var4 * var4)) {
+					int var15 = 0;
+
+					for(int var16 = 0; var16 < this.wavePlacedBlocks.size(); ++var16) {
+						ChunkPosition var17 = (ChunkPosition)this.wavePlacedBlocks.get(var16);
+						if(this.getBlockId(var17.x, var17.y, var17.z) != 0) {
+							int var18 = var17.x - var9.x;
+							if(var18 < 0) {
+								var18 = -var18;
+							}
+
+							int var19 = var17.y - var9.y;
+							if(var19 < 0) {
+								var19 = -var19;
+							}
+
+							int var20 = var17.z - var9.z;
+							if(var20 < 0) {
+								var20 = -var20;
+							}
+							if(var18 <= 6 && var19 <= 4 && var20 <= 6) {
+								++var15;
+							}
+						}
+					}
+
+					double var21 = (double)(var15 * 6) - Math.sqrt(var13);
+					if(var21 > var6) {
+						var6 = var21;
+						var5 = var9;
+					}
+				}
+			}
+		}
+
+		return var5;
 	}
 
 	private void func_27070_x() {

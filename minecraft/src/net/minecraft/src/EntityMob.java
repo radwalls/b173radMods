@@ -2,10 +2,16 @@ package net.minecraft.src;
 
 public class EntityMob extends EntityCreature implements IMob {
 	protected int attackStrength = 2;
+	private static final int WAVE_MOB_WATCHER_INDEX = 30;
 
 	public EntityMob(World var1) {
 		super(var1);
 		this.health = 20;
+	}
+
+	protected void entityInit() {
+		super.entityInit();
+		this.dataWatcher.addObject(WAVE_MOB_WATCHER_INDEX, Byte.valueOf((byte)0));
 	}
 
 	public void onLivingUpdate() {
@@ -26,6 +32,10 @@ public class EntityMob extends EntityCreature implements IMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.isWaveMob()) {
+			return this.worldObj.getClosestPlayerToEntity(this, 256.0D);
+		}
+
 		EntityPlayer var1 = this.worldObj.getClosestPlayerToEntity(this, 16.0D);
 		return var1 != null && this.canEntityBeSeen(var1) ? var1 : null;
 	}
@@ -60,10 +70,12 @@ public class EntityMob extends EntityCreature implements IMob {
 
 	public void writeEntityToNBT(NBTTagCompound var1) {
 		super.writeEntityToNBT(var1);
+		var1.setBoolean("WaveMob", this.isWaveMob());
 	}
 
 	public void readEntityFromNBT(NBTTagCompound var1) {
 		super.readEntityFromNBT(var1);
+		this.setWaveMob(var1.getBoolean("WaveMob"));
 	}
 
 	public boolean getCanSpawnHere() {
@@ -83,5 +95,13 @@ public class EntityMob extends EntityCreature implements IMob {
 
 			return var4 <= this.rand.nextInt(8) && super.getCanSpawnHere();
 		}
+	}
+
+	public void setWaveMob(boolean var1) {
+		this.dataWatcher.updateObject(WAVE_MOB_WATCHER_INDEX, Byte.valueOf((byte)(var1 ? 1 : 0)));
+	}
+
+	public boolean isWaveMob() {
+		return this.dataWatcher.getWatchableObjectByte(WAVE_MOB_WATCHER_INDEX) == 1;
 	}
 }
