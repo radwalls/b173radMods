@@ -54,6 +54,8 @@ public class World implements IBlockAccess {
 	private int soundCounter;
 	private List field_1012_M;
 	public boolean multiplayerWorld;
+	private final HashSet redWavePlacedBlocks = new HashSet();
+	private final ArrayList redWavePlacedBlockOrder = new ArrayList();
 
 	public WorldChunkManager getWorldChunkManager() {
 		return this.worldProvider.worldChunkMgr;
@@ -1748,6 +1750,7 @@ public class World implements IBlockAccess {
 				var2 = this.worldInfo.getWorldTime() + 24000L;
 				this.worldInfo.setWorldTime(var2 - var2 % 24000L);
 				this.wakeUpAllPlayers();
+				RedWaveSystem.onPlayersSlept(this);
 			}
 		}
 
@@ -1768,6 +1771,7 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		RedWaveSystem.tick(this);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
 	}
@@ -2413,6 +2417,77 @@ public class World implements IBlockAccess {
 
 	public boolean func_27161_C() {
 		return (double)this.func_27162_g(1.0F) > 0.2D;
+	}
+
+	public void registerPlayerPlacedBlock(int var1, int var2, int var3) {
+		long var4 = RedWaveSystem.packPlacedPos(var1, var2, var3);
+		Long var6 = Long.valueOf(var4);
+		if(this.redWavePlacedBlocks.add(var6)) {
+			this.redWavePlacedBlockOrder.add(var6);
+			while(this.redWavePlacedBlockOrder.size() > RedWaveSystem.getTrackedLimit()) {
+				Long var7 = (Long)this.redWavePlacedBlockOrder.remove(0);
+				this.redWavePlacedBlocks.remove(var7);
+			}
+		}
+	}
+
+	public void unregisterPlacedBlock(int var1, int var2, int var3) {
+		Long var4 = Long.valueOf(RedWaveSystem.packPlacedPos(var1, var2, var3));
+		if(this.redWavePlacedBlocks.remove(var4)) {
+			this.redWavePlacedBlockOrder.remove(var4);
+		}
+	}
+
+	public ChunkPosition getWaveSiegeTarget(EntityPlayer var1, int var2) {
+		if(this.redWavePlacedBlockOrder.isEmpty()) {
+			return null;
+		}
+
+		int var3 = MathHelper.floor_double(var1.posX);
+		int var4 = MathHelper.floor_double(var1.posY);
+		int var5 = MathHelper.floor_double(var1.posZ);
+		int var6 = var2 * var2;
+		int var7 = -1;
+		ChunkPosition var8 = null;
+		int var9 = this.redWavePlacedBlockOrder.size();
+		int var10 = Math.min(256, var9);
+
+		for(int var11 = 0; var11 < var10; ++var11) {
+			Long var12 = (Long)this.redWavePlacedBlockOrder.get(this.rand.nextInt(var9));
+			int var13 = RedWaveSystem.unpackX(var12.longValue());
+			int var14 = RedWaveSystem.unpackY(var12.longValue());
+			int var15 = RedWaveSystem.unpackZ(var12.longValue());
+			int var16 = var13 - var3;
+			int var17 = var14 - var4;
+			int var18 = var15 - var5;
+			if(var16 * var16 + var17 * var17 + var18 * var18 > var6) {
+				continue;
+			}
+
+			if(this.getBlockId(var13, var14, var15) == 0) {
+				this.unregisterPlacedBlock(var13, var14, var15);
+				continue;
+			}
+
+			int var19 = 0;
+			for(int var20 = -3; var20 <= 3; ++var20) {
+				for(int var21 = -2; var21 <= 2; ++var21) {
+					for(int var22 = -3; var22 <= 3; ++var22) {
+						long var23 = RedWaveSystem.packPlacedPos(var13 + var20, var14 + var21, var15 + var22);
+						if(this.redWavePlacedBlocks.contains(Long.valueOf(var23))) {
+							++var19;
+						}
+					}
+				}
+			}
+
+			if(var19 > var7) {
+				var7 = var19;
+				var8 = new ChunkPosition(var13, var14, var15);
+			}
+		}
+
+		return var8;
 	}
 
 	public boolean canBlockBeRainedOn(int var1, int var2, int var3) {

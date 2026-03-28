@@ -18,6 +18,8 @@ public class WorldInfo {
 	private int rainTime;
 	private boolean thundering;
 	private int thunderTime;
+	private int redWaveCount;
+	private long nextRedWaveDay;
 
 	public WorldInfo(NBTTagCompound var1) {
 		this.randomSeed = var1.getLong("RandomSeed");
@@ -33,6 +35,8 @@ public class WorldInfo {
 		this.raining = var1.getBoolean("raining");
 		this.thunderTime = var1.getInteger("thunderTime");
 		this.thundering = var1.getBoolean("thundering");
+		this.redWaveCount = var1.getInteger("RedWaveCount");
+		this.nextRedWaveDay = var1.getLong("NextRedWaveDay");
 		if(var1.hasKey("Player")) {
 			this.playerTag = var1.getCompoundTag("Player");
 			this.dimension = this.playerTag.getInteger("Dimension");
@@ -61,6 +65,8 @@ public class WorldInfo {
 		this.raining = var1.raining;
 		this.thunderTime = var1.thunderTime;
 		this.thundering = var1.thundering;
+		this.redWaveCount = var1.redWaveCount;
+		this.nextRedWaveDay = var1.nextRedWaveDay;
 	}
 
 	public NBTTagCompound getNBTTagCompound() {
@@ -100,6 +106,8 @@ public class WorldInfo {
 		var1.setBoolean("raining", this.raining);
 		var1.setInteger("thunderTime", this.thunderTime);
 		var1.setBoolean("thundering", this.thundering);
+		var1.setInteger("RedWaveCount", this.redWaveCount);
+		var1.setLong("NextRedWaveDay", this.nextRedWaveDay);
 		if(var2 != null) {
 			var1.setCompoundTag("Player", var2);
 		}
@@ -218,5 +226,21 @@ public class WorldInfo {
 
 	public void setRainTime(int var1) {
 		this.rainTime = var1;
+	}
+
+	public int getRedWaveCount() {
+		return this.redWaveCount;
+	}
+
+	public void setRedWaveCount(int var1) {
+		this.redWaveCount = var1;
+	}
+
+	public long getNextRedWaveDay() {
+		return this.nextRedWaveDay;
+	}
+
+	public void setNextRedWaveDay(long var1) {
+		this.nextRedWaveDay = var1;
 	}
 }
