@@ -11,6 +11,10 @@ public class PlayerControllerMP extends PlayerController {
 	private float field_9441_h = 0.0F;
 	private int blockHitDelay = 0;
 	private boolean isHittingBlock = false;
+	private int lastMinedBlockX = -1;
+	private int lastMinedBlockY = -1;
+	private int lastMinedBlockZ = -1;
+	private float lastMinedBlockDamage = 0.0F;
 	private NetClientHandler netClientHandler;
 	private int currentPlayerItem = 0;
 
@@ -35,11 +39,16 @@ public class PlayerControllerMP extends PlayerController {
 			}
 		}
 
+		if(var6 && var1 == this.lastMinedBlockX && var2 == this.lastMinedBlockY && var3 == this.lastMinedBlockZ) {
+			this.lastMinedBlockDamage = 0.0F;
+		}
+
 		return var6;
 	}
 
 	public void clickBlock(int var1, int var2, int var3, int var4) {
 		if(!this.isHittingBlock || var1 != this.currentBlockX || var2 != this.currentBlockY || var3 != this.currentblockZ) {
+			this.storeCurrentBlockDamage();
 			this.netClientHandler.addToSendQueue(new Packet14BlockDig(0, var1, var2, var3, var4));
 			int var5 = this.mc.theWorld.getBlockId(var1, var2, var3);
 			if(var5 > 0 && this.curBlockDamageMP == 0.0F) {
@@ -53,8 +62,12 @@ public class PlayerControllerMP extends PlayerController {
 				this.currentBlockX = var1;
 				this.currentBlockY = var2;
 				this.currentblockZ = var3;
-				this.curBlockDamageMP = 0.0F;
-				this.prevBlockDamageMP = 0.0F;
+				this.curBlockDamageMP = this.getStoredBlockDamage(var1, var2, var3) + this.consumeChargedMiningBonus();
+				if(this.curBlockDamageMP > 0.95F) {
+					this.curBlockDamageMP = 0.95F;
+				}
+
+				this.prevBlockDamageMP = this.curBlockDamageMP;
 				this.field_9441_h = 0.0F;
 			}
 		}
@@ -62,6 +75,7 @@ public class PlayerControllerMP extends PlayerController {
 	}
 
 	public void resetBlockRemoving() {
+		this.storeCurrentBlockDamage();
 		this.curBlockDamageMP = 0.0F;
 		this.isHittingBlock = false;
 	}
@@ -104,11 +118,17 @@ public class PlayerControllerMP extends PlayerController {
 	}
 
 	public void setPartialTime(float var1) {
-		if(this.curBlockDamageMP <= 0.0F) {
+		float var2;
+		if(this.curBlockDamageMP > 0.0F) {
+			var2 = this.prevBlockDamageMP + (this.curBlockDamageMP - this.prevBlockDamageMP) * var1;
+		} else {
+			var2 = this.getStoredBlockDamageFromMouseOver();
+		}
+
+		if(var2 <= 0.0F) {
 			this.mc.ingameGUI.damageGuiPartialTime = 0.0F;
 			this.mc.renderGlobal.damagePartialTime = 0.0F;
 		} else {
-			float var2 = this.prevBlockDamageMP + (this.curBlockDamageMP - this.prevBlockDamageMP) * var1;
 			this.mc.ingameGUI.damageGuiPartialTime = var2;
 			this.mc.renderGlobal.damagePartialTime = var2;
 		}
@@ -126,7 +146,31 @@ public class PlayerControllerMP extends PlayerController {
 	public void updateController() {
 		this.syncCurrentPlayItem();
 		this.prevBlockDamageMP = this.curBlockDamageMP;
+		if((!this.isHittingBlock || this.currentBlockX != this.lastMinedBlockX || this.currentBlockY != this.lastMinedBlockY || this.currentblockZ != this.lastMinedBlockZ || this.curBlockDamageMP <= 0.0F) && this.lastMinedBlockDamage > 0.0F) {
+			this.lastMinedBlockDamage -= 0.01F;
+			if(this.lastMinedBlockDamage < 0.0F) {
+				this.lastMinedBlockDamage = 0.0F;
+			}
+		}
+
 		this.mc.sndManager.playRandomMusicIfReady();
+	}
+
+	private void storeCurrentBlockDamage() {
+		if(this.currentBlockX >= 0 && this.currentBlockY >= 0 && this.currentblockZ >= 0 && this.curBlockDamageMP > 0.0F) {
+			this.lastMinedBlockX = this.currentBlockX;
+			this.lastMinedBlockY = this.currentBlockY;
+			this.lastMinedBlockZ = this.currentblockZ;
+			this.lastMinedBlockDamage = this.curBlockDamageMP;
+		}
+	}
+
+	private float getStoredBlockDamage(int var1, int var2, int var3) {
+		return var1 == this.lastMinedBlockX && var2 == this.lastMinedBlockY && var3 == this.lastMinedBlockZ ? this.lastMinedBlockDamage : 0.0F;
+	}
+
+	private float getStoredBlockDamageFromMouseOver() {
+		return this.mc.objectMouseOver != null && this.mc.objectMouseOver.typeOfHit == EnumMovingObjectType.TILE ? this.getStoredBlockDamage(this.mc.objectMouseOver.blockX, this.mc.objectMouseOver.blockY, this.mc.objectMouseOver.blockZ) : 0.0F;
 	}
 
 	private void syncCurrentPlayItem() {
