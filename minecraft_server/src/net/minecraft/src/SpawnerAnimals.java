@@ -7,7 +7,7 @@ import java.util.Set;
 
 public final class SpawnerAnimals {
 	private static Set eligibleChunksForSpawning = new HashSet();
-	protected static final Class[] field_22213_a = new Class[]{EntitySpider.class, EntityZombie.class, EntitySkeleton.class};
+	protected static final Class[] field_22213_a = new Class[]{EntityCreeper.class};
 
 	protected static ChunkPosition getRandomSpawningPointInChunk(World var0, int var1, int var2) {
 		int var3 = var1 + var0.rand.nextInt(16);
@@ -98,13 +98,13 @@ public final class SpawnerAnimals {
 
 						int var20 = 0;
 
-						for(int var21 = 0; var21 < 3; ++var21) {
+						for(int var21 = 0; var21 < 12; ++var21) {
 							int var22 = var42;
 							int var23 = var18;
 							int var24 = var19;
 							byte var25 = 6;
 
-							for(int var26 = 0; var26 < 4; ++var26) {
+							for(int var26 = 0; var26 < 16; ++var26) {
 								var22 += var0.rand.nextInt(var25) - var0.rand.nextInt(var25);
 								var23 += var0.rand.nextInt(1) - var0.rand.nextInt(1);
 								var24 += var0.rand.nextInt(var25) - var0.rand.nextInt(var25);
