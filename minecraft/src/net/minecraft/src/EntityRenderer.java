@@ -141,6 +141,10 @@ public class EntityRenderer {
 			var3 = 60.0F;
 		}
 
+		if(var2 instanceof EntityPlayer && ((EntityPlayer)var2).isUsingSpyglass()) {
+			var3 = 20.0F;
+		}
+
 		if(var2.health <= 0) {
 			float var4 = (float)var2.deathTime + var1;
 			var3 /= (1.0F - 500.0F / (var4 + 500.0F)) * 2.0F + 1.0F;

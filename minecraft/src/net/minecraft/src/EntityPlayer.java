@@ -36,6 +36,7 @@ public abstract class EntityPlayer extends EntityLiving {
 	public float prevTimeInPortal;
 	private int damageRemainder = 0;
 	public EntityFish fishEntity = null;
+	public int spyglassUseTicks = 0;
 
 	public EntityPlayer(World var1) {
 		super(var1);
@@ -57,6 +58,14 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public void onUpdate() {
+		if(this.spyglassUseTicks > 0) {
+			--this.spyglassUseTicks;
+		}
+
+		if(!this.isHoldingSpyglass()) {
+			this.spyglassUseTicks = 0;
+		}
+
 		if(this.isPlayerSleeping()) {
 			++this.sleepTimer;
 			if(this.sleepTimer > 100) {
@@ -177,6 +186,11 @@ public abstract class EntityPlayer extends EntityLiving {
 		this.inventory.decrementAnimations();
 		this.field_775_e = this.field_774_f;
 		super.onLivingUpdate();
+		if(this.isUsingSpyglass()) {
+			this.motionX *= 0.8D;
+			this.motionZ *= 0.8D;
+		}
+
 		float var1 = MathHelper.sqrt_double(this.motionX * this.motionX + this.motionZ * this.motionZ);
 		float var2 = (float)Math.atan(-this.motionY * (double)0.2F) * 15.0F;
 		if(var1 > 0.1F) {
@@ -209,6 +223,15 @@ public abstract class EntityPlayer extends EntityLiving {
 
 	private void collideWithPlayer(Entity var1) {
 		var1.onCollideWithPlayer(this);
+	}
+
+	public boolean isUsingSpyglass() {
+		return this.spyglassUseTicks > 0 && this.isHoldingSpyglass();
+	}
+
+	private boolean isHoldingSpyglass() {
+		ItemStack var1 = this.getCurrentEquippedItem();
+		return var1 != null && var1.itemID == Item.spyglass.shiftedIndex;
 	}
 
 	public int getScore() {
