@@ -2,9 +2,11 @@ package net.minecraft.src;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
@@ -54,6 +56,8 @@ public class World implements IBlockAccess {
 	private int soundCounter;
 	private List field_1012_M;
 	public boolean multiplayerWorld;
+	private Set playerPlacedBlocks;
+	private Map playerPlacedChunkCounts;
 
 	public WorldChunkManager getWorldChunkManager() {
 		return this.worldProvider.worldChunkMgr;
@@ -90,6 +94,8 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.playerPlacedBlocks = new HashSet();
+		this.playerPlacedChunkCounts = new HashMap();
 		this.saveHandler = var1;
 		this.worldInfo = new WorldInfo(var4, var2);
 		this.worldProvider = var3;
@@ -131,6 +137,8 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.playerPlacedBlocks = new HashSet();
+		this.playerPlacedChunkCounts = new HashMap();
 		this.lockTimestamp = var1.lockTimestamp;
 		this.saveHandler = var1.saveHandler;
 		this.worldInfo = new WorldInfo(var1.worldInfo);
@@ -177,6 +185,8 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.playerPlacedBlocks = new HashSet();
+		this.playerPlacedChunkCounts = new HashMap();
 		this.saveHandler = var1;
 		this.field_28108_z = new MapStorage(var1);
 		this.worldInfo = var1.loadWorldInfo();
@@ -367,7 +377,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var6 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var6.setBlockIDWithMetadata(var1 & 15, var2, var3 & 15, var4, var5);
+				boolean var7 = var6.setBlockIDWithMetadata(var1 & 15, var2, var3 & 15, var4, var5);
+				if(var7) {
+					this.updatePlayerPlacedBlockTracking(var1, var2, var3, var4);
+				}
+
+				return var7;
 			}
 		} else {
 			return false;
@@ -382,7 +397,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var5 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				boolean var6 = var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				if(var6) {
+					this.updatePlayerPlacedBlockTracking(var1, var2, var3, var4);
+				}
+
+				return var6;
 			}
 		} else {
 			return false;
@@ -1752,6 +1772,7 @@ public class World implements IBlockAccess {
 		}
 
 		SpawnerAnimals.performSpawning(this, this.spawnHostileMobs, this.spawnPeacefulMobs);
+		SpawnerAnimals.performWaveSpawning(this);
 		this.chunkProvider.unload100OldestChunks();
 		int var4 = this.calculateSkylightSubtracted(1.0F);
 		if(var4 != this.skylightSubtracted) {
@@ -2449,5 +2470,76 @@ public class World implements IBlockAccess {
 			((IWorldAccess)this.worldAccesses.get(var7)).func_28136_a(var1, var2, var3, var4, var5, var6);
 		}
 
+	}
+
+	public void markBlockAsPlayerPlaced(int var1, int var2, int var3) {
+		Long var4 = Long.valueOf(this.packBlockKey(var1, var2, var3));
+		if(this.playerPlacedBlocks.add(var4)) {
+			Long var5 = Long.valueOf(this.packChunkKey(var1 >> 4, var3 >> 4));
+			Integer var6 = (Integer)this.playerPlacedChunkCounts.get(var5);
+			this.playerPlacedChunkCounts.put(var5, Integer.valueOf(var6 == null ? 1 : var6.intValue() + 1));
+		}
+	}
+
+	public boolean isPlayerPlacedBlock(int var1, int var2, int var3) {
+		return this.playerPlacedBlocks.contains(Long.valueOf(this.packBlockKey(var1, var2, var3)));
+	}
+
+	public ChunkPosition findBestWaveTarget(int var1, int var2, int var3, int var4) {
+		EntityPlayer var5 = this.getClosestPlayer((double)var1, (double)var2, (double)var3, 192.0D);
+		if(var5 == null) {
+			return null;
+		}
+
+		int var6 = MathHelper.floor_double(var5.posX) >> 4;
+		int var7 = MathHelper.floor_double(var5.posZ) >> 4;
+		int var8 = Math.max(1, var4 >> 4);
+		ChunkPosition var9 = null;
+		int var10 = 0;
+
+		for(int var11 = var6 - var8; var11 <= var6 + var8; ++var11) {
+			for(int var12 = var7 - var8; var12 <= var7 + var8; ++var12) {
+				Integer var13 = (Integer)this.playerPlacedChunkCounts.get(Long.valueOf(this.packChunkKey(var11, var12)));
+				if(var13 != null && var13.intValue() > var10) {
+					int var14 = (var11 << 4) + 8;
+					int var15 = (var12 << 4) + 8;
+					if((double)((var14 - var1) * (var14 - var1) + (var15 - var3) * (var15 - var3)) <= (double)(var4 * var4)) {
+						var10 = var13.intValue();
+						var9 = new ChunkPosition(var14, this.getFirstUncoveredBlock(var14, var15), var15);
+					}
+				}
+			}
+		}
+
+		return var10 >= 8 ? var9 : null;
+	}
+
+	private void updatePlayerPlacedBlockTracking(int var1, int var2, int var3, int var4) {
+		if(var4 == 0) {
+			this.unmarkPlayerPlacedBlock(var1, var2, var3);
+		}
+	}
+
+	private void unmarkPlayerPlacedBlock(int var1, int var2, int var3) {
+		Long var4 = Long.valueOf(this.packBlockKey(var1, var2, var3));
+		if(this.playerPlacedBlocks.remove(var4)) {
+			Long var5 = Long.valueOf(this.packChunkKey(var1 >> 4, var3 >> 4));
+			Integer var6 = (Integer)this.playerPlacedChunkCounts.get(var5);
+			if(var6 != null) {
+				if(var6.intValue() <= 1) {
+					this.playerPlacedChunkCounts.remove(var5);
+				} else {
+					this.playerPlacedChunkCounts.put(var5, Integer.valueOf(var6.intValue() - 1));
+				}
+			}
+		}
+	}
+
+	private long packBlockKey(int var1, int var2, int var3) {
+		return ((long)var1 & 67108863L) << 38 | ((long)var3 & 67108863L) << 12 | (long)(var2 & 4095);
+	}
+
+	private long packChunkKey(int var1, int var2) {
+		return ((long)var1 & 4294967295L) << 32 | (long)var2 & 4294967295L;
 	}
 }

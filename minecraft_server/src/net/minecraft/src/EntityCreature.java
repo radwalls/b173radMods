@@ -15,7 +15,7 @@ public class EntityCreature extends EntityLiving {
 
 	protected void updatePlayerActionState() {
 		this.hasAttacked = this.func_25026_u();
-		float var1 = 16.0F;
+		float var1 = this.getTargetSearchDistance();
 		if(this.playerToAttack == null) {
 			this.playerToAttack = this.findPlayerToAttack();
 			if(this.playerToAttack != null) {
@@ -154,6 +154,10 @@ public class EntityCreature extends EntityLiving {
 
 	protected Entity findPlayerToAttack() {
 		return null;
+	}
+
+	protected float getTargetSearchDistance() {
+		return 16.0F;
 	}
 
 	public boolean getCanSpawnHere() {
