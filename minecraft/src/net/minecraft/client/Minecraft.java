@@ -43,6 +43,7 @@ import net.minecraft.src.GuiMainMenu;
 import net.minecraft.src.GuiScreen;
 import net.minecraft.src.GuiSleepMP;
 import net.minecraft.src.GuiUnused;
+import net.minecraft.src.HerobrineController;
 import net.minecraft.src.IChunkProvider;
 import net.minecraft.src.ISaveFormat;
 import net.minecraft.src.ISaveHandler;
@@ -163,6 +164,7 @@ public abstract class Minecraft implements Runnable {
 	public boolean isRaining = false;
 	long systemTime = System.currentTimeMillis();
 	private int joinPlayerCounter = 0;
+	private HerobrineController herobrineController = new HerobrineController();
 
 	public Minecraft(Component var1, Canvas var2, MinecraftApplet var3, int var4, int var5, boolean var6) {
 		StatList.func_27360_a();
@@ -1118,6 +1120,10 @@ public abstract class Minecraft implements Runnable {
 		}
 
 		if(this.theWorld != null) {
+			if(!this.isGamePaused) {
+				this.herobrineController.update(this);
+			}
+
 			if(this.thePlayer != null) {
 				++this.joinPlayerCounter;
 				if(this.joinPlayerCounter == 30) {
