@@ -2,6 +2,12 @@ package net.minecraft.src;
 
 public class EntityMob extends EntityCreature implements IMob {
 	protected int attackStrength = 2;
+	private boolean isWaveMob = false;
+	private int blockBreakTime = 0;
+	private int targetBlockX;
+	private int targetBlockY;
+	private int targetBlockZ;
+	private int retargetCooldown = 0;
 
 	public EntityMob(World var1) {
 		super(var1);
@@ -15,6 +21,9 @@ public class EntityMob extends EntityCreature implements IMob {
 		}
 
 		super.onLivingUpdate();
+		if(this.isWaveMob && !this.worldObj.multiplayerWorld) {
+			this.updateWaveBlockBehavior();
+		}
 	}
 
 	public void onUpdate() {
@@ -26,6 +35,10 @@ public class EntityMob extends EntityCreature implements IMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.isWaveMob) {
+			return this.worldObj.getClosestPlayerToEntity(this, 128.0D);
+		}
+
 		EntityPlayer var1 = this.worldObj.getClosestPlayerToEntity(this, 16.0D);
 		return var1 != null && this.canEntityBeSeen(var1) ? var1 : null;
 	}
@@ -60,10 +73,12 @@ public class EntityMob extends EntityCreature implements IMob {
 
 	public void writeEntityToNBT(NBTTagCompound var1) {
 		super.writeEntityToNBT(var1);
+		var1.setBoolean("WaveMob", this.isWaveMob);
 	}
 
 	public void readEntityFromNBT(NBTTagCompound var1) {
 		super.readEntityFromNBT(var1);
+		this.isWaveMob = var1.getBoolean("WaveMob");
 	}
 
 	public boolean getCanSpawnHere() {
@@ -83,5 +98,63 @@ public class EntityMob extends EntityCreature implements IMob {
 
 			return var4 <= this.rand.nextInt(8) && super.getCanSpawnHere();
 		}
+	}
+
+	public boolean isWaveMob() {
+		return this.isWaveMob;
+	}
+
+	public void setWaveMob(boolean var1) {
+		this.isWaveMob = var1;
+	}
+
+	private void updateWaveBlockBehavior() {
+		if(this.playerToAttack != null && this.playerToAttack.isEntityAlive() && this.getDistanceToEntity(this.playerToAttack) < 20.0F) {
+			return;
+		}
+
+		if(this.retargetCooldown-- <= 0) {
+			this.retargetCooldown = 20 + this.rand.nextInt(20);
+			ChunkCoordinates var1 = WaveSurvivalManager.findPreferredBuildTarget(this.worldObj, MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ), 56);
+			if(var1 != null) {
+				this.targetBlockX = var1.posX;
+				this.targetBlockY = var1.posY;
+				this.targetBlockZ = var1.posZ;
+				this.setPathToEntity(this.worldObj.getEntityPathToXYZ(this, this.targetBlockX, this.targetBlockY, this.targetBlockZ, 32.0F));
+			}
+		}
+
+		ChunkCoordinates var2 = WaveSurvivalManager.findNearbyPlacedBlock(this.worldObj, MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ), 2);
+		if(var2 != null) {
+			int var3 = this.worldObj.getBlockId(var2.posX, var2.posY, var2.posZ);
+			if(var3 > 0 && var3 != Block.bedrock.blockID && var3 != Block.obsidian.blockID) {
+				int var4 = this.getWaveBlockBreakTime(var3);
+				++this.blockBreakTime;
+				if(this.blockBreakTime >= var4) {
+					int var5 = this.worldObj.getBlockMetadata(var2.posX, var2.posY, var2.posZ);
+					this.worldObj.setBlockWithNotify(var2.posX, var2.posY, var2.posZ, 0);
+					this.worldObj.playAuxSFX(2001, var2.posX, var2.posY, var2.posZ, var3 + (var5 << 12));
+					this.blockBreakTime = 0;
+				}
+			} else {
+				this.blockBreakTime = 0;
+			}
+		} else {
+			this.blockBreakTime = 0;
+		}
+	}
+
+	private int getWaveBlockBreakTime(int var1) {
+		if(this instanceof EntityCreeper) {
+			return 20;
+		}
+
+		Block var2 = Block.blocksList[var1];
+		float var3 = var2 == null ? 1.0F : var2.getBlockHardness();
+		if(var3 < 0.0F) {
+			return 999999;
+		}
+
+		return MathHelper.floor_float(80.0F + var3 * 60.0F);
 	}
 }
