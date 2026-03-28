@@ -4,6 +4,7 @@ import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
+import java.util.ArrayList;
 
 public final class SpawnerAnimals {
 	private static Set eligibleChunksForSpawning = new HashSet();
@@ -252,13 +253,20 @@ public final class SpawnerAnimals {
 			return;
 		}
 
-		int var1 = (int)(var0.getWorldTime() / 48000L);
-		if(var1 <= 0 || var1 <= var0.worldInfo.getLastWaveNumber()) {
+		ArrayList var1 = new ArrayList();
+		for(int var2 = 0; var2 < var0.playerEntities.size(); ++var2) {
+			EntityPlayer var3 = (EntityPlayer)var0.playerEntities.get(var2);
+			if(var3.isPlayerSleeping()) {
+				var1.add(var3);
+			}
+		}
+
+		if(var1.isEmpty()) {
 			return;
 		}
 
-		EntityPlayer var2 = (EntityPlayer)var0.playerEntities.get(var0.rand.nextInt(var0.playerEntities.size()));
-		int var3 = 4 + var1 * 3 + var0.playerEntities.size() * 2;
+		EntityPlayer var2 = (EntityPlayer)var1.get(var0.rand.nextInt(var1.size()));
+		int var3 = 4 + var0.playerEntities.size() * 2;
 		int var4 = 0;
 
 		for(int var5 = 0; var5 < var3; ++var5) {
@@ -288,8 +296,6 @@ public final class SpawnerAnimals {
 			}
 		}
 
-		if(var4 > 0) {
-			var0.worldInfo.setLastWaveNumber(var1);
-		}
+		var0.worldInfo.setLastWaveNumber((int)(var0.getWorldTime() / 24000L));
 	}
 }
