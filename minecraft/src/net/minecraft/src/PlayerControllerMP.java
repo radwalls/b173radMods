@@ -162,6 +162,12 @@ public class PlayerControllerMP extends PlayerController {
 		var1.attackTargetEntityWithCurrentItem(var2);
 	}
 
+	public void attackEntity(EntityPlayer var1, Entity var2, float var3, boolean var4) {
+		this.syncCurrentPlayItem();
+		this.netClientHandler.addToSendQueue(new Packet7UseEntity(var1.entityId, var2.entityId, 1));
+		var1.attackTargetEntityWithCurrentItem(var2, var3, var4);
+	}
+
 	public void interactWithEntity(EntityPlayer var1, Entity var2) {
 		this.syncCurrentPlayItem();
 		this.netClientHandler.addToSendQueue(new Packet7UseEntity(var1.entityId, var2.entityId, 0));

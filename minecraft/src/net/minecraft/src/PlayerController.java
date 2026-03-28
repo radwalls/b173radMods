@@ -89,6 +89,10 @@ public class PlayerController {
 		var1.attackTargetEntityWithCurrentItem(var2);
 	}
 
+	public void attackEntity(EntityPlayer var1, Entity var2, float var3, boolean var4) {
+		var1.attackTargetEntityWithCurrentItem(var2, var3, var4);
+	}
+
 	public ItemStack func_27174_a(int var1, int var2, int var3, boolean var4, EntityPlayer var5) {
 		return var5.craftingInventory.func_27280_a(var2, var3, var4, var5);
 	}

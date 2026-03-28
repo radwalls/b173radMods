@@ -48,6 +48,7 @@ import net.minecraft.src.ISaveFormat;
 import net.minecraft.src.ISaveHandler;
 import net.minecraft.src.ItemRenderer;
 import net.minecraft.src.ItemStack;
+import net.minecraft.src.ItemSword;
 import net.minecraft.src.LoadingScreenRenderer;
 import net.minecraft.src.MathHelper;
 import net.minecraft.src.MinecraftError;
@@ -163,6 +164,8 @@ public abstract class Minecraft implements Runnable {
 	public boolean isRaining = false;
 	long systemTime = System.currentTimeMillis();
 	private int joinPlayerCounter = 0;
+	private boolean isChargingSwordAttack = false;
+	private int swordChargeStartTick = 0;
 
 	public Minecraft(Component var1, Canvas var2, MinecraftApplet var3, int var4, int var5, boolean var6) {
 		StatList.func_27360_a();
@@ -749,6 +752,10 @@ public abstract class Minecraft implements Runnable {
 
 	public void setIngameNotInFocus() {
 		if(this.inGameHasFocus) {
+			if(this.isChargingSwordAttack) {
+				this.releaseSwordCharge();
+			}
+
 			if(this.thePlayer != null) {
 				this.thePlayer.resetPlayerKeyState();
 			}
@@ -839,6 +846,51 @@ public abstract class Minecraft implements Runnable {
 			}
 
 		}
+	}
+
+	private boolean canChargeSwordAttack() {
+		if(this.thePlayer == null || this.theWorld == null || this.theWorld.multiplayerWorld) {
+			return false;
+		} else {
+			ItemStack var1 = this.thePlayer.getCurrentEquippedItem();
+			if(var1 == null || !(var1.getItem() instanceof ItemSword)) {
+				return false;
+			} else {
+				return this.objectMouseOver == null || this.objectMouseOver.typeOfHit != EnumMovingObjectType.TILE;
+			}
+		}
+	}
+
+	private void beginSwordCharge() {
+		this.isChargingSwordAttack = true;
+		this.swordChargeStartTick = this.ticksRan;
+		this.thePlayer.setSwordCharging(true);
+	}
+
+	private void releaseSwordCharge() {
+		if(this.thePlayer != null) {
+			int var1 = this.ticksRan - this.swordChargeStartTick;
+			float var2 = (float)var1 / 20.0F;
+			if(var2 > 1.0F) {
+				var2 = 1.0F;
+			}
+
+			float var3 = 1.0F + var2;
+			boolean var4 = var2 >= 0.35F;
+			if(var4) {
+				this.thePlayer.swingChargedItem();
+			} else {
+				this.thePlayer.swingItem();
+			}
+
+			if(this.objectMouseOver != null && this.objectMouseOver.typeOfHit == EnumMovingObjectType.ENTITY) {
+				this.playerController.attackEntity(this.thePlayer, this.objectMouseOver.entityHit, var3, var4);
+			}
+
+			this.thePlayer.setSwordCharging(false);
+		}
+
+		this.isChargingSwordAttack = false;
 	}
 
 	public void toggleFullscreen() {
@@ -968,6 +1020,10 @@ public abstract class Minecraft implements Runnable {
 		}
 
 		if(this.currentScreen != null) {
+			if(this.isChargingSwordAttack) {
+				this.releaseSwordCharge();
+			}
+
 			this.leftClickCounter = 10000;
 			this.mouseTicksRan = this.ticksRan + 10000;
 		}
@@ -997,7 +1053,7 @@ public abstract class Minecraft implements Runnable {
 										do {
 											if(!Keyboard.next()) {
 												if(this.currentScreen == null) {
-													if(Mouse.isButtonDown(0) && (float)(this.ticksRan - this.mouseTicksRan) >= this.timer.ticksPerSecond / 4.0F && this.inGameHasFocus) {
+													if(Mouse.isButtonDown(0) && (float)(this.ticksRan - this.mouseTicksRan) >= this.timer.ticksPerSecond / 4.0F && this.inGameHasFocus && !this.isChargingSwordAttack) {
 														this.clickMouse(0);
 														this.mouseTicksRan = this.ticksRan;
 													}
@@ -1008,7 +1064,7 @@ public abstract class Minecraft implements Runnable {
 													}
 												}
 
-												this.func_6254_a(0, this.currentScreen == null && Mouse.isButtonDown(0) && this.inGameHasFocus);
+												this.func_6254_a(0, this.currentScreen == null && Mouse.isButtonDown(0) && this.inGameHasFocus && !this.isChargingSwordAttack);
 												break label301;
 											}
 
@@ -1095,9 +1151,18 @@ public abstract class Minecraft implements Runnable {
 							if(!this.inGameHasFocus && Mouse.getEventButtonState()) {
 								this.setIngameFocus();
 							} else {
-								if(Mouse.getEventButton() == 0 && Mouse.getEventButtonState()) {
-									this.clickMouse(0);
-									this.mouseTicksRan = this.ticksRan;
+								if(Mouse.getEventButton() == 0) {
+									if(Mouse.getEventButtonState()) {
+										if(this.canChargeSwordAttack()) {
+											this.beginSwordCharge();
+										} else {
+											this.clickMouse(0);
+											this.mouseTicksRan = this.ticksRan;
+										}
+									} else if(this.isChargingSwordAttack) {
+										this.releaseSwordCharge();
+										this.mouseTicksRan = this.ticksRan;
+									}
 								}
 
 								if(Mouse.getEventButton() == 1 && Mouse.getEventButtonState()) {
