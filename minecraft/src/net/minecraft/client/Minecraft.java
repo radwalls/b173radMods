@@ -8,6 +8,7 @@ import java.awt.Dimension;
 import java.awt.Frame;
 import java.awt.Graphics;
 import java.io.File;
+import java.util.Random;
 import net.minecraft.src.AchievementList;
 import net.minecraft.src.AxisAlignedBB;
 import net.minecraft.src.Block;
@@ -21,6 +22,7 @@ import net.minecraft.src.EntityClientPlayerMP;
 import net.minecraft.src.EntityLiving;
 import net.minecraft.src.EntityPlayer;
 import net.minecraft.src.EntityPlayerSP;
+import net.minecraft.src.EntityOtherPlayerMP;
 import net.minecraft.src.EntityRenderer;
 import net.minecraft.src.EnumMovingObjectType;
 import net.minecraft.src.EnumOS2;
@@ -163,6 +165,14 @@ public abstract class Minecraft implements Runnable {
 	public boolean isRaining = false;
 	long systemTime = System.currentTimeMillis();
 	private int joinPlayerCounter = 0;
+	private final Random herobrineRandom = new Random();
+	private EntityOtherPlayerMP herobrineEntity;
+	private int herobrineTriggerStep = 0;
+	private int herobrineTriggerTimeout = 0;
+	private int herobrineCooldownTicks = 0;
+	private int herobrineLifeTicks = 0;
+	private boolean herobrineLookedAt = false;
+	private boolean herobrineJumpPressed = false;
 
 	public Minecraft(Component var1, Canvas var2, MinecraftApplet var3, int var4, int var5, boolean var6) {
 		StatList.func_27360_a();
@@ -811,12 +821,14 @@ public abstract class Minecraft implements Runnable {
 				int var6 = this.objectMouseOver.sideHit;
 				if(var1 == 0) {
 					this.playerController.clickBlock(var3, var4, var5, this.objectMouseOver.sideHit);
+					this.recordHerobrineTrigger(2);
 				} else {
 					ItemStack var7 = this.thePlayer.inventory.getCurrentItem();
 					int var8 = var7 != null ? var7.stackSize : 0;
 					if(this.playerController.sendPlaceBlock(this.thePlayer, this.theWorld, var7, var3, var4, var5, var6)) {
 						var2 = false;
 						this.thePlayer.swingItem();
+						this.recordHerobrineTrigger(0);
 					}
 
 					if(var7 == null) {
@@ -835,6 +847,7 @@ public abstract class Minecraft implements Runnable {
 				ItemStack var9 = this.thePlayer.inventory.getCurrentItem();
 				if(var9 != null && this.playerController.sendUseItem(this.thePlayer, this.theWorld, var9)) {
 					this.entityRenderer.itemRenderer.func_9450_c();
+					this.recordHerobrineTrigger(0);
 				}
 			}
 
@@ -1119,6 +1132,15 @@ public abstract class Minecraft implements Runnable {
 
 		if(this.theWorld != null) {
 			if(this.thePlayer != null) {
+				boolean var10 = Keyboard.isKeyDown(this.gameSettings.keyBindJump.keyCode);
+				if(var10 && !this.herobrineJumpPressed) {
+					this.recordHerobrineTrigger(1);
+				}
+
+				this.herobrineJumpPressed = var10;
+			}
+
+			if(this.thePlayer != null) {
 				++this.joinPlayerCounter;
 				if(this.joinPlayerCounter == 30) {
 					this.joinPlayerCounter = 0;
@@ -1159,6 +1181,8 @@ public abstract class Minecraft implements Runnable {
 			if(!this.isGamePaused) {
 				this.effectRenderer.updateEffects();
 			}
+
+			this.updateHerobrine();
 		}
 
 		this.systemTime = System.currentTimeMillis();
@@ -1264,6 +1288,7 @@ public abstract class Minecraft implements Runnable {
 		}
 
 		this.theWorld = var1;
+		this.resetHerobrineState();
 		if(var1 != null) {
 			this.playerController.func_717_a(var1);
 			if(!this.isMultiplayerWorld()) {
@@ -1321,6 +1346,130 @@ public abstract class Minecraft implements Runnable {
 
 		System.gc();
 		this.systemTime = 0L;
+	}
+
+	private void recordHerobrineTrigger(int var1) {
+		if(this.herobrineEntity != null || this.theWorld == null || this.thePlayer == null || this.isGamePaused) {
+			return;
+		}
+
+		if(this.herobrineCooldownTicks > 0) {
+			return;
+		}
+
+		if(this.herobrineTriggerTimeout > 0) {
+			--this.herobrineTriggerTimeout;
+		}
+
+		if(this.herobrineTriggerTimeout == 0 && this.herobrineTriggerStep > 0) {
+			this.herobrineTriggerStep = 0;
+		}
+
+		if(this.herobrineTriggerStep == 0 && var1 == 0) {
+			this.herobrineTriggerStep = 1;
+			this.herobrineTriggerTimeout = 80;
+		} else if(this.herobrineTriggerStep == 1 && var1 == 1) {
+			this.herobrineTriggerStep = 2;
+			this.herobrineTriggerTimeout = 80;
+		} else if(this.herobrineTriggerStep == 2 && var1 == 2) {
+			this.spawnHerobrine();
+		} else if(var1 == 0) {
+			this.herobrineTriggerStep = 1;
+			this.herobrineTriggerTimeout = 80;
+		} else {
+			this.herobrineTriggerStep = 0;
+			this.herobrineTriggerTimeout = 0;
+		}
+	}
+
+	private void updateHerobrine() {
+		if(this.herobrineCooldownTicks > 0) {
+			--this.herobrineCooldownTicks;
+		}
+
+		if(this.herobrineTriggerTimeout > 0 && this.herobrineEntity == null) {
+			--this.herobrineTriggerTimeout;
+			if(this.herobrineTriggerTimeout == 0) {
+				this.herobrineTriggerStep = 0;
+			}
+		}
+
+		if(this.herobrineEntity == null || this.thePlayer == null) {
+			return;
+		}
+
+		++this.herobrineLifeTicks;
+		double var1 = this.herobrineEntity.posX - this.thePlayer.posX;
+		double var3 = this.herobrineEntity.posY + (double)this.herobrineEntity.getEyeHeight() - (this.thePlayer.posY + (double)this.thePlayer.getEyeHeight());
+		double var5 = this.herobrineEntity.posZ - this.thePlayer.posZ;
+		double var7 = Math.sqrt(var1 * var1 + var3 * var3 + var5 * var5);
+		if(var7 < 0.001D) {
+			return;
+		}
+
+		Vec3D var9 = this.thePlayer.getLookVec();
+		double var10 = (var1 * var9.xCoord + var3 * var9.yCoord + var5 * var9.zCoord) / var7;
+		boolean var12 = var10 > 0.985D;
+		if(!this.herobrineLookedAt && var12) {
+			this.herobrineLookedAt = true;
+		} else if(this.herobrineLookedAt && !var12) {
+			this.removeHerobrine();
+			return;
+		}
+
+		if(this.herobrineLifeTicks > 400) {
+			this.removeHerobrine();
+		}
+	}
+
+	private void spawnHerobrine() {
+		if(this.theWorld == null || this.thePlayer == null) {
+			return;
+		}
+
+		float var1 = this.thePlayer.rotationYaw + (this.herobrineRandom.nextFloat() * 60.0F - 30.0F);
+		double var2 = 28.0D + (double)(this.herobrineRandom.nextFloat() * 18.0F);
+		double var4 = this.thePlayer.posX - (double)MathHelper.sin(var1 * (float)Math.PI / 180.0F) * var2;
+		double var6 = this.thePlayer.posZ + (double)MathHelper.cos(var1 * (float)Math.PI / 180.0F) * var2;
+		int var8 = MathHelper.floor_double(var4);
+		int var9 = MathHelper.floor_double(var6);
+		double var10 = (double)this.theWorld.getHeightValue(var8, var9);
+		if(var10 < 1.0D) {
+			var10 = this.thePlayer.posY;
+		}
+
+		this.herobrineEntity = new EntityOtherPlayerMP(this.theWorld, "Herobrine");
+		this.herobrineEntity.setLocationAndAngles(var4, var10, var6, this.thePlayer.rotationYaw + 180.0F, 0.0F);
+		this.herobrineEntity.motionX = 0.0D;
+		this.herobrineEntity.motionY = 0.0D;
+		this.herobrineEntity.motionZ = 0.0D;
+		this.herobrineEntity.onGround = true;
+		this.theWorld.entityJoinedWorld(this.herobrineEntity);
+		this.herobrineLifeTicks = 0;
+		this.herobrineLookedAt = false;
+		this.herobrineTriggerStep = 0;
+		this.herobrineTriggerTimeout = 0;
+	}
+
+	private void removeHerobrine() {
+		if(this.herobrineEntity != null && this.theWorld != null) {
+			this.theWorld.setEntityDead(this.herobrineEntity);
+		}
+
+		this.herobrineEntity = null;
+		this.herobrineLifeTicks = 0;
+		this.herobrineLookedAt = false;
+		this.herobrineCooldownTicks = 240;
+	}
+
+	private void resetHerobrineState() {
+		this.herobrineEntity = null;
+		this.herobrineTriggerStep = 0;
+		this.herobrineTriggerTimeout = 0;
+		this.herobrineCooldownTicks = 0;
+		this.herobrineLifeTicks = 0;
+		this.herobrineLookedAt = false;
+		this.herobrineJumpPressed = false;
 	}
 
 	private void convertMapFormat(String var1, String var2) {
