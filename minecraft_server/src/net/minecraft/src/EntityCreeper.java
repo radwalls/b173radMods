@@ -138,4 +138,8 @@ public class EntityCreeper extends EntityMob {
 		super.onStruckByLightning(var1);
 		this.dataWatcher.updateObject(17, Byte.valueOf((byte)1));
 	}
+
+	protected int getWaveBlockBreakInterval() {
+		return this.isWaveMob() ? 14 : super.getWaveBlockBreakInterval();
+	}
 }
