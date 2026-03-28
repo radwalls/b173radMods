@@ -1,5 +1,6 @@
 package net.minecraft.src;
 
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
@@ -252,44 +253,47 @@ public final class SpawnerAnimals {
 			return;
 		}
 
-		int var1 = (int)(var0.getWorldTime() / 48000L);
-		if(var1 <= 0 || var1 <= var0.worldInfo.getLastWaveNumber()) {
-			return;
-		}
+		ArrayList var1 = new ArrayList();
+		Iterator var2 = var0.playerEntities.iterator();
 
-		EntityPlayer var2 = (EntityPlayer)var0.playerEntities.get(var0.rand.nextInt(var0.playerEntities.size()));
-		int var3 = 4 + var1 * 3 + var0.playerEntities.size() * 2;
-		int var4 = 0;
-
-		for(int var5 = 0; var5 < var3; ++var5) {
-			double var6 = var0.rand.nextDouble() * Math.PI * 2.0D;
-			double var8 = 96.0D + (double)var0.rand.nextInt(48);
-			int var10 = MathHelper.floor_double(var2.posX + Math.cos(var6) * var8);
-			int var11 = MathHelper.floor_double(var2.posZ + Math.sin(var6) * var8);
-			int var12 = var0.getFirstUncoveredBlock(var10, var11);
-			if(canCreatureTypeSpawnAtLocation(EnumCreatureType.monster, var0, var10, var12, var11)) {
-				EntityLiving var13;
-				try {
-					Class var14 = waveSpawnEntities[var0.rand.nextInt(waveSpawnEntities.length)];
-					var13 = (EntityLiving)var14.getConstructor(new Class[]{World.class}).newInstance(new Object[]{var0});
-				} catch (Exception var15) {
-					continue;
-				}
-
-				var13.setLocationAndAngles((double)var10 + 0.5D, (double)var12, (double)var11 + 0.5D, var0.rand.nextFloat() * 360.0F, 0.0F);
-				if(var13.getCanSpawnHere()) {
-					if(var13 instanceof EntityMob) {
-						((EntityMob)var13).setWaveMob(true);
-					}
-
-					var0.entityJoinedWorld(var13);
-					++var4;
-				}
+		while(var2.hasNext()) {
+			EntityPlayer var3 = (EntityPlayer)var2.next();
+			if(var3.isPlayerSleeping()) {
+				var1.add(var3);
 			}
 		}
 
-		if(var4 > 0) {
-			var0.worldInfo.setLastWaveNumber(var1);
+		if(var1.isEmpty()) {
+			return;
+		}
+
+		EntityPlayer var11 = (EntityPlayer)var1.get(var0.rand.nextInt(var1.size()));
+		int var4 = 6 + var1.size() * 4;
+
+		for(int var5 = 0; var5 < var4; ++var5) {
+			double var6 = var0.rand.nextDouble() * Math.PI * 2.0D;
+			double var8 = 96.0D + (double)var0.rand.nextInt(48);
+			int var10 = MathHelper.floor_double(var11.posX + Math.cos(var6) * var8);
+			int var12 = MathHelper.floor_double(var11.posZ + Math.sin(var6) * var8);
+			int var13 = var0.getFirstUncoveredBlock(var10, var12);
+			if(canCreatureTypeSpawnAtLocation(EnumCreatureType.monster, var0, var10, var13, var12)) {
+				EntityLiving var14;
+				try {
+					Class var15 = waveSpawnEntities[var0.rand.nextInt(waveSpawnEntities.length)];
+					var14 = (EntityLiving)var15.getConstructor(new Class[]{World.class}).newInstance(new Object[]{var0});
+				} catch (Exception var16) {
+					continue;
+				}
+
+				var14.setLocationAndAngles((double)var10 + 0.5D, (double)var13, (double)var12 + 0.5D, var0.rand.nextFloat() * 360.0F, 0.0F);
+				if(var14.getCanSpawnHere()) {
+					if(var14 instanceof EntityMob) {
+						((EntityMob)var14).setWaveMob(true);
+					}
+
+					var0.entityJoinedWorld(var14);
+				}
+			}
 		}
 	}
 }
