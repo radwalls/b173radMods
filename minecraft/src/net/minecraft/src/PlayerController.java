@@ -26,6 +26,7 @@ public class PlayerController {
 		boolean var8 = var5.setBlockWithNotify(var1, var2, var3, 0);
 		if(var6 != null && var8) {
 			var6.onBlockDestroyedByPlayer(var5, var1, var2, var3, var7);
+			var5.markPlayerRemovedBlock(var1, var2, var3);
 		}
 
 		return var8;

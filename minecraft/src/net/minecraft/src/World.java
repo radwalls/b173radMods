@@ -49,6 +49,8 @@ public class World implements IBlockAccess {
 	private int lightingUpdatesCounter;
 	private boolean spawnHostileMobs;
 	private boolean spawnPeacefulMobs;
+	private final RedWaveSystem redWaveSystem = new RedWaveSystem();
+	private final RedWaveStructureTracker redWaveStructureTracker = new RedWaveStructureTracker();
 	static int lightingUpdatesScheduled = 0;
 	private Set positionsToUpdate;
 	private int soundCounter;
@@ -93,6 +95,7 @@ public class World implements IBlockAccess {
 		this.saveHandler = var1;
 		this.worldInfo = new WorldInfo(var4, var2);
 		this.worldProvider = var3;
+		this.redWaveSystem.readFromWorldInfo(this.worldInfo);
 		this.field_28108_z = new MapStorage(var1);
 		var3.registerWorld(this);
 		this.chunkProvider = this.getChunkProvider();
@@ -197,6 +200,7 @@ public class World implements IBlockAccess {
 			this.worldInfo.setWorldName(var2);
 		}
 
+		this.redWaveSystem.readFromWorldInfo(this.worldInfo);
 		this.worldProvider.registerWorld(this);
 		this.chunkProvider = this.getChunkProvider();
 		if(var6) {
@@ -292,6 +296,7 @@ public class World implements IBlockAccess {
 
 	private void saveLevel() {
 		this.checkSessionLock();
+		this.redWaveSystem.writeToWorldInfo(this.worldInfo);
 		this.saveHandler.saveWorldInfoAndPlayer(this.worldInfo, this.playerEntities);
 		this.field_28108_z.saveAllData();
 	}
@@ -1730,6 +1735,26 @@ public class World implements IBlockAccess {
 
 	}
 
+	public RedWaveSystem getRedWaveSystem() {
+		return this.redWaveSystem;
+	}
+
+	public RedWaveStructureTracker getRedWaveStructureTracker() {
+		return this.redWaveStructureTracker;
+	}
+
+	public void onPlayerSleptForRedWave() {
+		this.redWaveSystem.onPlayerSlept(this);
+	}
+
+	public void markPlayerPlacedBlock(int var1, int var2, int var3) {
+		this.redWaveStructureTracker.onPlayerPlacedBlock(var1, var2, var3);
+	}
+
+	public void markPlayerRemovedBlock(int var1, int var2, int var3) {
+		this.redWaveStructureTracker.onPlayerRemovedBlock(var1, var2, var3);
+	}
+
 	public void setAllowedMobSpawns(boolean var1, boolean var2) {
 		this.spawnHostileMobs = var1;
 		this.spawnPeacefulMobs = var2;
@@ -1737,6 +1762,7 @@ public class World implements IBlockAccess {
 
 	public void tick() {
 		this.updateWeather();
+		this.redWaveSystem.tick(this);
 		long var2;
 		if(this.isAllPlayersFullyAsleep()) {
 			boolean var1 = false;
