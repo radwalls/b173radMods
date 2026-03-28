@@ -5,6 +5,7 @@ import net.minecraft.client.Minecraft;
 public class PlayerController {
 	protected final Minecraft mc;
 	public boolean field_1064_b = false;
+	private int chargedMiningTicks = 0;
 
 	public PlayerController(Minecraft var1) {
 		this.mc = var1;
@@ -63,6 +64,42 @@ public class PlayerController {
 	}
 
 	public void updateController() {
+	}
+
+	public void tickChargedMining(boolean var1) {
+		if(!var1) {
+			this.chargedMiningTicks = 0;
+		} else {
+			ItemStack var2 = this.mc.thePlayer != null ? this.mc.thePlayer.getCurrentEquippedItem() : null;
+			if(var2 != null && var2.getItem() instanceof ItemPickaxe) {
+				ItemPickaxe var3 = (ItemPickaxe)var2.getItem();
+				if(this.chargedMiningTicks < var3.getChargedMiningMaxTicks()) {
+					++this.chargedMiningTicks;
+				}
+			} else {
+				this.chargedMiningTicks = 0;
+			}
+		}
+	}
+
+	protected float consumeChargedMiningBonus() {
+		ItemStack var1 = this.mc.thePlayer != null ? this.mc.thePlayer.getCurrentEquippedItem() : null;
+		if(var1 != null && var1.getItem() instanceof ItemPickaxe) {
+			ItemPickaxe var2 = (ItemPickaxe)var1.getItem();
+			int var3 = var2.getChargedMiningMaxTicks();
+			if(this.chargedMiningTicks > 0 && var3 > 0) {
+				float var4 = (float)this.chargedMiningTicks / (float)var3;
+				if(var4 > 1.0F) {
+					var4 = 1.0F;
+				}
+
+				this.chargedMiningTicks = 0;
+				return var2.getChargedMiningDamageBonus(var4);
+			}
+		}
+
+		this.chargedMiningTicks = 0;
+		return 0.0F;
 	}
 
 	public boolean shouldDrawHUD() {

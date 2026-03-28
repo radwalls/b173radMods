@@ -1008,6 +1008,8 @@ public abstract class Minecraft implements Runnable {
 													}
 												}
 
+												boolean var7 = this.currentScreen == null && Mouse.isButtonDown(0) && this.inGameHasFocus && (this.objectMouseOver == null || this.objectMouseOver.typeOfHit != EnumMovingObjectType.TILE);
+												this.playerController.tickChargedMining(var7);
 												this.func_6254_a(0, this.currentScreen == null && Mouse.isButtonDown(0) && this.inGameHasFocus);
 												break label301;
 											}
