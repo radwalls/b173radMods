@@ -8,6 +8,7 @@ import java.util.Set;
 public final class SpawnerAnimals {
 	private static Set eligibleChunksForSpawning = new HashSet();
 	protected static final Class[] field_22213_a = new Class[]{EntitySpider.class, EntityZombie.class, EntitySkeleton.class};
+	private static final Class[] waveSpawnEntities = new Class[]{EntityZombie.class, EntitySkeleton.class, EntitySpider.class, EntityCreeper.class};
 
 	protected static ChunkPosition getRandomSpawningPointInChunk(World var0, int var1, int var2) {
 		int var3 = var1 + var0.rand.nextInt(16);
@@ -243,6 +244,52 @@ public final class SpawnerAnimals {
 					}
 				}
 			}
+		}
+	}
+
+	public static void performWaveSpawning(World var0) {
+		if(var0.singleplayerWorld || var0.playerEntities.isEmpty() || var0.difficultySetting <= 0) {
+			return;
+		}
+
+		int var1 = (int)(var0.getWorldTime() / 48000L);
+		if(var1 <= 0 || var1 <= var0.worldInfo.getLastWaveNumber()) {
+			return;
+		}
+
+		EntityPlayer var2 = (EntityPlayer)var0.playerEntities.get(var0.rand.nextInt(var0.playerEntities.size()));
+		int var3 = 4 + var1 * 3 + var0.playerEntities.size() * 2;
+		int var4 = 0;
+
+		for(int var5 = 0; var5 < var3; ++var5) {
+			double var6 = var0.rand.nextDouble() * Math.PI * 2.0D;
+			double var8 = 96.0D + (double)var0.rand.nextInt(48);
+			int var10 = MathHelper.floor_double(var2.posX + Math.cos(var6) * var8);
+			int var11 = MathHelper.floor_double(var2.posZ + Math.sin(var6) * var8);
+			int var12 = var0.getFirstUncoveredBlock(var10, var11);
+			if(func_21167_a(EnumCreatureType.monster, var0, var10, var12, var11)) {
+				EntityLiving var13;
+				try {
+					Class var14 = waveSpawnEntities[var0.rand.nextInt(waveSpawnEntities.length)];
+					var13 = (EntityLiving)var14.getConstructor(new Class[]{World.class}).newInstance(new Object[]{var0});
+				} catch (Exception var15) {
+					continue;
+				}
+
+				var13.setLocationAndAngles((double)var10 + 0.5D, (double)var12, (double)var11 + 0.5D, var0.rand.nextFloat() * 360.0F, 0.0F);
+				if(var13.getCanSpawnHere()) {
+					if(var13 instanceof EntityMob) {
+						((EntityMob)var13).setWaveMob(true);
+					}
+
+					var0.entityJoinedWorld(var13);
+					++var4;
+				}
+			}
+		}
+
+		if(var4 > 0) {
+			var0.worldInfo.setLastWaveNumber(var1);
 		}
 	}
 }

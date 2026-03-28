@@ -18,6 +18,7 @@ public class WorldInfo {
 	private int rainTime;
 	private boolean isThundering;
 	private int thunderTime;
+	private int lastWaveNumber;
 
 	public WorldInfo(NBTTagCompound var1) {
 		this.randomSeed = var1.getLong("RandomSeed");
@@ -33,6 +34,7 @@ public class WorldInfo {
 		this.isRaining = var1.getBoolean("raining");
 		this.thunderTime = var1.getInteger("thunderTime");
 		this.isThundering = var1.getBoolean("thundering");
+		this.lastWaveNumber = var1.getInteger("WaveLastNumber");
 		if(var1.hasKey("Player")) {
 			this.field_22195_h = var1.getCompoundTag("Player");
 			this.field_22194_i = this.field_22195_h.getInteger("Dimension");
@@ -61,6 +63,7 @@ public class WorldInfo {
 		this.isRaining = var1.isRaining;
 		this.thunderTime = var1.thunderTime;
 		this.isThundering = var1.isThundering;
+		this.lastWaveNumber = var1.lastWaveNumber;
 	}
 
 	public NBTTagCompound func_22185_a() {
@@ -100,6 +103,7 @@ public class WorldInfo {
 		var1.setBoolean("raining", this.isRaining);
 		var1.setInteger("thunderTime", this.thunderTime);
 		var1.setBoolean("thundering", this.isThundering);
+		var1.setInteger("WaveLastNumber", this.lastWaveNumber);
 		if(var2 != null) {
 			var1.setCompoundTag("Player", var2);
 		}
@@ -190,5 +194,13 @@ public class WorldInfo {
 
 	public void setRainTime(int var1) {
 		this.rainTime = var1;
+	}
+
+	public int getLastWaveNumber() {
+		return this.lastWaveNumber;
+	}
+
+	public void setLastWaveNumber(int var1) {
+		this.lastWaveNumber = var1;
 	}
 }
