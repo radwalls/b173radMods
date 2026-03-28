@@ -54,6 +54,11 @@ public class World implements IBlockAccess {
 	private int soundCounter;
 	private List field_1012_M;
 	public boolean multiplayerWorld;
+	private Set playerPlacedBlocks;
+	private List playerPlacedBlockList;
+	private long lastWaveSpawnTime;
+	private int waveNumber;
+	private boolean waveSpawnedDuringCurrentSleep;
 
 	public WorldChunkManager getWorldChunkManager() {
 		return this.worldProvider.worldChunkMgr;
@@ -90,6 +95,11 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.playerPlacedBlocks = new HashSet();
+		this.playerPlacedBlockList = new ArrayList();
+		this.lastWaveSpawnTime = -48000L;
+		this.waveNumber = 0;
+		this.waveSpawnedDuringCurrentSleep = false;
 		this.saveHandler = var1;
 		this.worldInfo = new WorldInfo(var4, var2);
 		this.worldProvider = var3;
@@ -131,6 +141,11 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.playerPlacedBlocks = new HashSet();
+		this.playerPlacedBlockList = new ArrayList();
+		this.lastWaveSpawnTime = -48000L;
+		this.waveNumber = 0;
+		this.waveSpawnedDuringCurrentSleep = false;
 		this.lockTimestamp = var1.lockTimestamp;
 		this.saveHandler = var1.saveHandler;
 		this.worldInfo = new WorldInfo(var1.worldInfo);
@@ -177,6 +192,11 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.playerPlacedBlocks = new HashSet();
+		this.playerPlacedBlockList = new ArrayList();
+		this.lastWaveSpawnTime = -48000L;
+		this.waveNumber = 0;
+		this.waveSpawnedDuringCurrentSleep = false;
 		this.saveHandler = var1;
 		this.field_28108_z = new MapStorage(var1);
 		this.worldInfo = var1.loadWorldInfo();
@@ -360,6 +380,9 @@ public class World implements IBlockAccess {
 	}
 
 	public boolean setBlockAndMetadata(int var1, int var2, int var3, int var4, int var5) {
+		if(var4 == 0) {
+			this.unmarkPlayerPlacedBlock(var1, var2, var3);
+		}
 		if(var1 >= -32000000 && var3 >= -32000000 && var1 < 32000000 && var3 <= 32000000) {
 			if(var2 < 0) {
 				return false;
@@ -375,6 +398,9 @@ public class World implements IBlockAccess {
 	}
 
 	public boolean setBlock(int var1, int var2, int var3, int var4) {
+		if(var4 == 0) {
+			this.unmarkPlayerPlacedBlock(var1, var2, var3);
+		}
 		if(var1 >= -32000000 && var3 >= -32000000 && var1 < 32000000 && var3 <= 32000000) {
 			if(var2 < 0) {
 				return false;
@@ -1739,6 +1765,11 @@ public class World implements IBlockAccess {
 		this.updateWeather();
 		long var2;
 		if(this.isAllPlayersFullyAsleep()) {
+			if(!this.waveSpawnedDuringCurrentSleep) {
+				this.spawnWaveMobs(this.worldInfo.getWorldTime() + 1L, true);
+				this.waveSpawnedDuringCurrentSleep = true;
+			}
+
 			boolean var1 = false;
 			if(this.spawnHostileMobs && this.difficultySetting >= 1) {
 				var1 = SpawnerAnimals.performSleepSpawning(this, this.playerEntities);
@@ -1749,6 +1780,8 @@ public class World implements IBlockAccess {
 				this.worldInfo.setWorldTime(var2 - var2 % 24000L);
 				this.wakeUpAllPlayers();
 			}
+		} else {
+			this.waveSpawnedDuringCurrentSleep = false;
 		}
 
 		SpawnerAnimals.performSpawning(this, this.spawnHostileMobs, this.spawnPeacefulMobs);
@@ -1768,8 +1801,128 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		this.spawnWaveMobs(var2, false);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
+	}
+
+
+	public void recordPlayerPlacedBlock(int var1, int var2, int var3) {
+		if(var2 >= 0 && var2 < 128) {
+			Long var4 = Long.valueOf(this.encodeBlockPos(var1, var2, var3));
+			if(this.playerPlacedBlocks.add(var4)) {
+				this.playerPlacedBlockList.add(var4);
+				if(this.playerPlacedBlockList.size() > 8192) {
+					Long var5 = (Long)this.playerPlacedBlockList.remove(0);
+					this.playerPlacedBlocks.remove(var5);
+				}
+			}
+		}
+	}
+
+	public boolean isPlayerPlacedBlock(int var1, int var2, int var3) {
+		return this.playerPlacedBlocks.contains(Long.valueOf(this.encodeBlockPos(var1, var2, var3)));
+	}
+
+	public ChunkPosition findBestPlayerStructureTarget(int var1, int var2, int var3, int var4) {
+		if(this.playerPlacedBlockList.size() < 8) {
+			return null;
+		} else {
+			ChunkPosition var5 = null;
+			int var6 = -1;
+			int var7 = Math.min(64, this.playerPlacedBlockList.size());
+
+			for(int var8 = 0; var8 < var7; ++var8) {
+				Long var9 = (Long)this.playerPlacedBlockList.get(this.rand.nextInt(this.playerPlacedBlockList.size()));
+				int var10 = this.decodeBlockPosX(var9.longValue());
+				int var11 = this.decodeBlockPosY(var9.longValue());
+				int var12 = this.decodeBlockPosZ(var9.longValue());
+				int var13 = var10 - var1;
+				int var14 = var11 - var2;
+				int var15 = var12 - var3;
+				if(var13 * var13 + var14 * var14 + var15 * var15 <= var4 * var4) {
+					int var16 = this.countPlayerPlacedNeighbors(var10, var11, var12, 3);
+					if(var16 > var6) {
+						var6 = var16;
+						var5 = new ChunkPosition(var10, var11, var12);
+					}
+				}
+			}
+
+			return var6 >= 6 ? var5 : null;
+		}
+	}
+
+	private int countPlayerPlacedNeighbors(int var1, int var2, int var3, int var4) {
+		int var5 = 0;
+
+		for(int var6 = -var4; var6 <= var4; ++var6) {
+			for(int var7 = -2; var7 <= 2; ++var7) {
+				for(int var8 = -var4; var8 <= var4; ++var8) {
+					if(this.isPlayerPlacedBlock(var1 + var6, var2 + var7, var3 + var8)) {
+						++var5;
+					}
+				}
+			}
+		}
+
+		return var5;
+	}
+
+	private void unmarkPlayerPlacedBlock(int var1, int var2, int var3) {
+		Long var4 = Long.valueOf(this.encodeBlockPos(var1, var2, var3));
+		if(this.playerPlacedBlocks.remove(var4)) {
+			this.playerPlacedBlockList.remove(var4);
+		}
+	}
+
+	private long encodeBlockPos(int var1, int var2, int var3) {
+		long var4 = (long)(var1 + 33554432) & 67108863L;
+		long var6 = (long)var2 & 255L;
+		long var8 = (long)(var3 + 33554432) & 67108863L;
+		return var4 << 34 | var8 << 8 | var6;
+	}
+
+	private int decodeBlockPosX(long var1) {
+		return (int)(var1 >> 34 & 67108863L) - 33554432;
+	}
+
+	private int decodeBlockPosY(long var1) {
+		return (int)(var1 & 255L);
+	}
+
+	private int decodeBlockPosZ(long var1) {
+		return (int)(var1 >> 8 & 67108863L) - 33554432;
+	}
+
+	private void spawnWaveMobs(long var1, boolean var3) {
+		if(!this.multiplayerWorld && this.difficultySetting > 0 && !this.playerEntities.isEmpty() && (var3 || var1 - this.lastWaveSpawnTime >= 48000L) && var1 > 0L) {
+			this.lastWaveSpawnTime = var1;
+			++this.waveNumber;
+			int var4 = 6 + this.waveNumber * 4;
+
+			for(int var5 = 0; var5 < this.playerEntities.size(); ++var5) {
+				EntityPlayer var6 = (EntityPlayer)this.playerEntities.get(var5);
+
+				for(int var7 = 0; var7 < var4; ++var7) {
+					float var8 = this.rand.nextFloat() * (float)Math.PI * 2.0F;
+					int var9 = 96 + this.rand.nextInt(48);
+					int var10 = MathHelper.floor_double(var6.posX + (double)(MathHelper.cos(var8) * (float)var9));
+					int var11 = MathHelper.floor_double(var6.posZ + (double)(MathHelper.sin(var8) * (float)var9));
+					int var12 = this.findTopSolidBlock(var10, var11);
+					if(var12 > 1 && var12 < 126) {
+						EntityMob var13 = this.rand.nextInt(5) == 0 ? new EntityWaveCreeper(this) : new EntityWaveZombie(this);
+						var13.setLocationAndAngles((double)var10 + 0.5D, (double)var12, (double)var11 + 0.5D, this.rand.nextFloat() * 360.0F, 0.0F);
+						if(var13.getCanSpawnHere()) {
+							this.entityJoinedWorld(var13);
+							if(var13 instanceof EntityCreature) {
+								((EntityCreature)var13).setTarget(var6);
+							}
+						}
+					}
+				}
+			}
+		}
 	}
 
 	private void func_27163_E() {
