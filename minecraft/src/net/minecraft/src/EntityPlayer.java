@@ -13,6 +13,10 @@ public abstract class EntityPlayer extends EntityLiving {
 	public float field_774_f;
 	public boolean isSwinging = false;
 	public int swingProgressInt = 0;
+	private int swingAnimationEnd = 8;
+	private int swordChargeTicks = 0;
+	private int prevSwordChargeTicks = 0;
+	private boolean isChargingSwordAttack = false;
 	public String username;
 	public int dimension;
 	public String playerCloakUrl;
@@ -158,18 +162,26 @@ public abstract class EntityPlayer extends EntityLiving {
 	protected void updatePlayerActionState() {
 		if(this.isSwinging) {
 			++this.swingProgressInt;
-			if(this.swingProgressInt >= 8) {
+			if(this.swingProgressInt >= this.swingAnimationEnd) {
 				this.swingProgressInt = 0;
 				this.isSwinging = false;
+				this.swingAnimationEnd = 8;
 			}
 		} else {
 			this.swingProgressInt = 0;
 		}
 
-		this.swingProgress = (float)this.swingProgressInt / 8.0F;
+		this.swingProgress = (float)this.swingProgressInt / (float)this.swingAnimationEnd;
 	}
 
 	public void onLivingUpdate() {
+		this.prevSwordChargeTicks = this.swordChargeTicks;
+		if(this.isChargingSwordAttack) {
+			++this.swordChargeTicks;
+		} else if(this.swordChargeTicks > 0) {
+			this.swordChargeTicks = 0;
+		}
+
 		if(this.worldObj.difficultySetting == 0 && this.health < 20 && this.ticksExisted % 20 * 12 == 0) {
 			this.heal(1);
 		}
@@ -481,24 +493,52 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public void swingItem() {
+		this.swingAnimationEnd = 8;
+		this.swingProgressInt = -1;
+		this.isSwinging = true;
+	}
+
+	public void swingChargedItem() {
+		this.swingAnimationEnd = 14;
 		this.swingProgressInt = -1;
 		this.isSwinging = true;
 	}
 
 	public void attackTargetEntityWithCurrentItem(Entity var1) {
-		int var2 = this.inventory.getDamageVsEntity(var1);
-		if(var2 > 0) {
+		this.attackTargetEntityWithCurrentItem(var1, 1.0F, false);
+	}
+
+	public void attackTargetEntityWithCurrentItem(Entity var1, float var2, boolean var3) {
+		int var4 = this.inventory.getDamageVsEntity(var1);
+		if(var4 > 0) {
+			ItemStack var5 = this.getCurrentEquippedItem();
+			boolean var6 = var5 != null && var5.getItem() instanceof ItemSword;
 			if(this.motionY < 0.0D) {
-				++var2;
+				++var4;
 			}
 
-			var1.attackEntityFrom(this, var2);
-			ItemStack var3 = this.getCurrentEquippedItem();
-			if(var3 != null && var1 instanceof EntityLiving) {
-				var3.hitEntity((EntityLiving)var1, this);
-				if(var3.stackSize <= 0) {
-					var3.func_1097_a(this);
+			if(var6 && var2 > 1.0F) {
+				var4 = Math.max(var4 + 1, MathHelper.floor_float((float)var4 * var2));
+			}
+
+			var1.attackEntityFrom(this, var4);
+			if(var5 != null && var1 instanceof EntityLiving) {
+				var5.hitEntity((EntityLiving)var1, this);
+				if(var5.stackSize <= 0) {
+					var5.func_1097_a(this);
 					this.destroyCurrentEquippedItem();
+				}
+			}
+
+			if(var3 && var6 && var1.isEntityAlive()) {
+				int var7 = Math.max(1, var4 / 2);
+				List var8 = this.worldObj.getEntitiesWithinAABBExcludingEntity(this, var1.boundingBox.expand(2.5D, 1.0D, 2.5D));
+
+				for(int var9 = 0; var9 < var8.size(); ++var9) {
+					Entity var10 = (Entity)var8.get(var9);
+					if(var10 != var1 && var10 instanceof EntityLiving && var10.canBeCollidedWith()) {
+						var10.attackEntityFrom(this, var7);
+					}
 				}
 			}
 
@@ -507,10 +547,28 @@ public abstract class EntityPlayer extends EntityLiving {
 					this.alertWolves((EntityLiving)var1, true);
 				}
 
-				this.addStat(StatList.damageDealtStat, var2);
+				this.addStat(StatList.damageDealtStat, var4);
 			}
 		}
 
+	}
+
+	public void setSwordCharging(boolean var1) {
+		this.isChargingSwordAttack = var1;
+		if(!var1) {
+			this.swordChargeTicks = 0;
+			this.prevSwordChargeTicks = 0;
+		}
+	}
+
+	public float getSwordChargePullback(float var1) {
+		float var2 = (float)this.prevSwordChargeTicks + (float)(this.swordChargeTicks - this.prevSwordChargeTicks) * var1;
+		var2 /= 20.0F;
+		if(var2 > 1.0F) {
+			var2 = 1.0F;
+		}
+
+		return var2;
 	}
 
 	public void respawnPlayer() {

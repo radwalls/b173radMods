@@ -220,11 +220,21 @@ public class ItemRenderer {
 		} else if(var5 != null) {
 			GL11.glPushMatrix();
 			var14 = 0.8F;
+			float var15 = 0.0F;
+			if(var5.getItem() instanceof ItemSword) {
+				var15 = var3.getSwordChargePullback(var1);
+			}
+
 			var8 = var3.getSwingProgress(var1);
 			var9 = MathHelper.sin(var8 * (float)Math.PI);
 			var10 = MathHelper.sin(MathHelper.sqrt_float(var8) * (float)Math.PI);
 			GL11.glTranslatef(-var10 * 0.4F, MathHelper.sin(MathHelper.sqrt_float(var8) * (float)Math.PI * 2.0F) * 0.2F, -var9 * 0.2F);
 			GL11.glTranslatef(0.7F * var14, -0.65F * var14 - (1.0F - var2) * 0.6F, -0.9F * var14);
+			if(var15 > 0.0F) {
+				GL11.glTranslatef(-0.18F * var15, 0.08F * var15, -0.32F * var15);
+				GL11.glRotatef(-28.0F * var15, 1.0F, 0.0F, 0.0F);
+			}
+
 			GL11.glRotatef(45.0F, 0.0F, 1.0F, 0.0F);
 			GL11.glEnable(GL12.GL_RESCALE_NORMAL);
 			var8 = var3.getSwingProgress(var1);
