@@ -36,6 +36,7 @@ public abstract class EntityPlayer extends EntityLiving {
 	public float prevTimeInPortal;
 	private int damageRemainder = 0;
 	public EntityFish fishEntity = null;
+	private boolean spyglassActive = false;
 
 	public EntityPlayer(World var1) {
 		super(var1);
@@ -170,6 +171,11 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public void onLivingUpdate() {
+		ItemStack var0 = this.inventory.getCurrentItem();
+		if(var0 == null || var0.itemID != Item.spyglass.shiftedIndex) {
+			this.spyglassActive = false;
+		}
+
 		if(this.worldObj.difficultySetting == 0 && this.health < 20 && this.ticksExisted % 20 * 12 == 0) {
 			this.heal(1);
 		}
@@ -517,6 +523,14 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public abstract void func_6420_o();
+
+	public boolean isUsingSpyglass() {
+		return this.spyglassActive;
+	}
+
+	public void setSpyglassActive(boolean var1) {
+		this.spyglassActive = var1;
+	}
 
 	public void onItemStackChanged(ItemStack var1) {
 	}
