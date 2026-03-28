@@ -20,22 +20,35 @@ public class ItemRenderer {
 
 	public void renderItem(EntityLiving var1, ItemStack var2) {
 		GL11.glPushMatrix();
-		if(var2.itemID < 256 && RenderBlocks.renderItemIn3d(Block.blocksList[var2.itemID].getRenderType())) {
-			GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
-			this.renderBlocksInstance.renderBlockOnInventory(Block.blocksList[var2.itemID], var2.getItemDamage(), var1.getEntityBrightness(1.0F));
-		} else {
-			if(var2.itemID < 256) {
+			if(var2.itemID < 256 && RenderBlocks.renderItemIn3d(Block.blocksList[var2.itemID].getRenderType())) {
 				GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
+				this.renderBlocksInstance.renderBlockOnInventory(Block.blocksList[var2.itemID], var2.getItemDamage(), var1.getEntityBrightness(1.0F));
 			} else {
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/gui/items.png"));
-			}
+				if(var2.itemID == Item.spyglass.shiftedIndex) {
+					GL11.glBindTexture(GL11.GL_TEXTURE_2D, TextureSpyglassIcon.getTexture(this.mc.renderEngine));
+				} else if(var2.itemID < 256) {
+					GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
+				} else {
+					GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/gui/items.png"));
+				}
 
-			Tessellator var3 = Tessellator.instance;
-			int var4 = var1.getItemIcon(var2);
-			float var5 = ((float)(var4 % 16 * 16) + 0.0F) / 256.0F;
-			float var6 = ((float)(var4 % 16 * 16) + 15.99F) / 256.0F;
-			float var7 = ((float)(var4 / 16 * 16) + 0.0F) / 256.0F;
-			float var8 = ((float)(var4 / 16 * 16) + 15.99F) / 256.0F;
+				Tessellator var3 = Tessellator.instance;
+				int var4 = var1.getItemIcon(var2);
+				float var5;
+				float var6;
+				float var7;
+				float var8;
+				if(var2.itemID == Item.spyglass.shiftedIndex) {
+					var5 = 0.0F;
+					var6 = 0.999F;
+					var7 = 0.0F;
+					var8 = 0.999F;
+				} else {
+					var5 = ((float)(var4 % 16 * 16) + 0.0F) / 256.0F;
+					var6 = ((float)(var4 % 16 * 16) + 15.99F) / 256.0F;
+					var7 = ((float)(var4 / 16 * 16) + 0.0F) / 256.0F;
+					var8 = ((float)(var4 / 16 * 16) + 15.99F) / 256.0F;
+				}
 			float var9 = 1.0F;
 			float var10 = 0.0F;
 			float var11 = 0.3F;
