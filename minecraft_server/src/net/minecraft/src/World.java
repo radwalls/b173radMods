@@ -49,6 +49,8 @@ public class World implements IBlockAccess {
 	private int field_4265_J = 0;
 	private boolean spawnHostileMobs = true;
 	private boolean spawnPeacefulMobs = true;
+	private final RedWaveSystem redWaveSystem = new RedWaveSystem();
+	private final RedWaveStructureTracker redWaveStructureTracker = new RedWaveStructureTracker();
 	static int field_4268_y = 0;
 	private Set activeChunkSet = new HashSet();
 	private int ambientTickCountdown = this.rand.nextInt(12000);
@@ -80,6 +82,7 @@ public class World implements IBlockAccess {
 			this.worldInfo.setLevelName(var2);
 		}
 
+		this.redWaveSystem.readFromWorldInfo(this.worldInfo);
 		this.worldProvider.registerWorld(this);
 		this.chunkProvider = this.getChunkProvider();
 		if(var6) {
@@ -134,6 +137,7 @@ public class World implements IBlockAccess {
 
 	private void saveLevel() {
 		this.checkSessionLock();
+		this.redWaveSystem.writeToWorldInfo(this.worldInfo);
 		this.worldFile.func_22095_a(this.worldInfo, this.playerEntities);
 		this.field_28105_z.func_28176_a();
 	}
@@ -1481,6 +1485,26 @@ public class World implements IBlockAccess {
 
 	}
 
+
+	public RedWaveSystem getRedWaveSystem() {
+		return this.redWaveSystem;
+	}
+
+	public RedWaveStructureTracker getRedWaveStructureTracker() {
+		return this.redWaveStructureTracker;
+	}
+
+	public void onPlayerSleptForRedWave() {
+		this.redWaveSystem.onPlayerSlept(this);
+	}
+
+	public void markPlayerPlacedBlock(int var1, int var2, int var3) {
+		this.redWaveStructureTracker.onPlayerPlacedBlock(var1, var2, var3);
+	}
+
+	public void markPlayerRemovedBlock(int var1, int var2, int var3) {
+		this.redWaveStructureTracker.onPlayerRemovedBlock(var1, var2, var3);
+	}
 	public void setAllowedSpawnTypes(boolean var1, boolean var2) {
 		this.spawnHostileMobs = var1;
 		this.spawnPeacefulMobs = var2;
@@ -1488,6 +1512,7 @@ public class World implements IBlockAccess {
 
 	public void tick() {
 		this.updateWeather();
+		this.redWaveSystem.tick(this);
 		long var2;
 		if(this.isAllPlayersFullyAsleep()) {
 			boolean var1 = false;

@@ -103,6 +103,10 @@ public class ItemInWorldManager {
 			}
 		}
 
+		if(var6) {
+			this.thisWorld.markPlayerRemovedBlock(var1, var2, var3);
+		}
+
 		if(var6 && this.thisPlayer.canHarvestBlock(Block.blocksList[var4])) {
 			Block.blocksList[var4].harvestBlock(this.thisWorld, this.thisPlayer, var1, var2, var3, var5);
 			((EntityPlayerMP)this.thisPlayer).playerNetServerHandler.sendPacket(new Packet53BlockChange(var1, var2, var3, this.thisWorld));

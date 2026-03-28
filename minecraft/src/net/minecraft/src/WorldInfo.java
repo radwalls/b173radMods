@@ -18,6 +18,9 @@ public class WorldInfo {
 	private int rainTime;
 	private boolean thundering;
 	private int thunderTime;
+	private boolean redWaveSleepTriggered;
+	private int redWaveNumber;
+	private long redWaveNextTime;
 
 	public WorldInfo(NBTTagCompound var1) {
 		this.randomSeed = var1.getLong("RandomSeed");
@@ -33,6 +36,9 @@ public class WorldInfo {
 		this.raining = var1.getBoolean("raining");
 		this.thunderTime = var1.getInteger("thunderTime");
 		this.thundering = var1.getBoolean("thundering");
+		this.redWaveSleepTriggered = var1.getBoolean("RedWaveSleepTriggered");
+		this.redWaveNumber = var1.getInteger("RedWaveNumber");
+		this.redWaveNextTime = var1.getLong("RedWaveNextTime");
 		if(var1.hasKey("Player")) {
 			this.playerTag = var1.getCompoundTag("Player");
 			this.dimension = this.playerTag.getInteger("Dimension");
@@ -61,6 +67,9 @@ public class WorldInfo {
 		this.raining = var1.raining;
 		this.thunderTime = var1.thunderTime;
 		this.thundering = var1.thundering;
+		this.redWaveSleepTriggered = var1.redWaveSleepTriggered;
+		this.redWaveNumber = var1.redWaveNumber;
+		this.redWaveNextTime = var1.redWaveNextTime;
 	}
 
 	public NBTTagCompound getNBTTagCompound() {
@@ -100,6 +109,9 @@ public class WorldInfo {
 		var1.setBoolean("raining", this.raining);
 		var1.setInteger("thunderTime", this.thunderTime);
 		var1.setBoolean("thundering", this.thundering);
+		var1.setBoolean("RedWaveSleepTriggered", this.redWaveSleepTriggered);
+		var1.setInteger("RedWaveNumber", this.redWaveNumber);
+		var1.setLong("RedWaveNextTime", this.redWaveNextTime);
 		if(var2 != null) {
 			var1.setCompoundTag("Player", var2);
 		}
@@ -218,5 +230,22 @@ public class WorldInfo {
 
 	public void setRainTime(int var1) {
 		this.rainTime = var1;
+	}
+	public void setRedWaveState(boolean var1, int var2, long var3) {
+		this.redWaveSleepTriggered = var1;
+		this.redWaveNumber = var2;
+		this.redWaveNextTime = var3;
+	}
+
+	public boolean getRedWaveSleepTriggered() {
+		return this.redWaveSleepTriggered;
+	}
+
+	public int getRedWaveNumber() {
+		return this.redWaveNumber;
+	}
+
+	public long getRedWaveNextTime() {
+		return this.redWaveNextTime;
 	}
 }

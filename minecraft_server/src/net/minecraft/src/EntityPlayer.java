@@ -561,6 +561,7 @@ public abstract class EntityPlayer extends EntityLiving {
 		this.motionX = this.motionZ = this.motionY = 0.0D;
 		if(!this.worldObj.singleplayerWorld) {
 			this.worldObj.updateAllPlayersSleepingFlag();
+			this.worldObj.onPlayerSleptForRedWave();
 		}
 
 		return EnumStatus.OK;

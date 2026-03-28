@@ -81,6 +81,9 @@ public class EntityList {
 		addMapping(EntityChicken.class, "Chicken", 93);
 		addMapping(EntitySquid.class, "Squid", 94);
 		addMapping(EntityWolf.class, "Wolf", 95);
+		addMapping(EntityRedWaveZombie.class, "RedWaveZombie", 96);
+		addMapping(EntityRedWaveSpider.class, "RedWaveSpider", 97);
+		addMapping(EntityRedWaveCreeper.class, "RedWaveCreeper", 98);
 		addMapping(EntityTNTPrimed.class, "PrimedTnt", 20);
 		addMapping(EntityFallingSand.class, "FallingSand", 21);
 		addMapping(EntityMinecart.class, "Minecart", 40);
