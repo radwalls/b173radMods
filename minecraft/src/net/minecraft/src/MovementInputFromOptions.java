@@ -73,5 +73,10 @@ public class MovementInputFromOptions extends MovementInput {
 			this.moveForward = (float)((double)this.moveForward * 0.3D);
 		}
 
+		if(ItemSpyglass.isUsingSpyglass(var1)) {
+			this.moveStrafe = (float)((double)this.moveStrafe * 0.65D);
+			this.moveForward = (float)((double)this.moveForward * 0.65D);
+		}
+
 	}
 }
