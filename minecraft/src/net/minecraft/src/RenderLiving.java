@@ -64,7 +64,8 @@ public class RenderLiving extends Render {
 			this.renderEquippedItems(var1, var9);
 			float var25 = var1.getEntityBrightness(var9);
 			int var18 = this.getColorMultiplier(var1, var25, var9);
-			if((var18 >> 24 & 255) > 0 || var1.hurtTime > 0 || var1.deathTime > 0) {
+			boolean var19 = var1 instanceof EntityMob && ((EntityMob)var1).isWaveMob();
+			if((var18 >> 24 & 255) > 0 || var1.hurtTime > 0 || var1.deathTime > 0 || var19) {
 				GL11.glDisable(GL11.GL_TEXTURE_2D);
 				GL11.glDisable(GL11.GL_ALPHA_TEST);
 				GL11.glEnable(GL11.GL_BLEND);
@@ -74,8 +75,8 @@ public class RenderLiving extends Render {
 					GL11.glColor4f(var25, 0.0F, 0.0F, 0.4F);
 					this.mainModel.render(var16, var15, var13, var11 - var10, var12, var14);
 
-					for(int var19 = 0; var19 < 4; ++var19) {
-						if(this.func_27005_b(var1, var19, var9)) {
+					for(int var20 = 0; var20 < 4; ++var20) {
+						if(this.func_27005_b(var1, var20, var9)) {
 							GL11.glColor4f(var25, 0.0F, 0.0F, 0.4F);
 							this.renderPassModel.render(var16, var15, var13, var11 - var10, var12, var14);
 						}
@@ -93,6 +94,18 @@ public class RenderLiving extends Render {
 					for(int var23 = 0; var23 < 4; ++var23) {
 						if(this.func_27005_b(var1, var23, var9)) {
 							GL11.glColor4f(var26, var20, var21, var22);
+							this.renderPassModel.render(var16, var15, var13, var11 - var10, var12, var14);
+						}
+					}
+				}
+
+				if(var19) {
+					GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.35F);
+					this.mainModel.render(var16, var15, var13, var11 - var10, var12, var14);
+
+					for(int var27 = 0; var27 < 4; ++var27) {
+						if(this.func_27005_b(var1, var27, var9)) {
+							GL11.glColor4f(1.0F, 0.0F, 0.0F, 0.35F);
 							this.renderPassModel.render(var16, var15, var13, var11 - var10, var12, var14);
 						}
 					}

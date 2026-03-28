@@ -367,7 +367,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var6 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var6.setBlockIDWithMetadata(var1 & 15, var2, var3 & 15, var4, var5);
+				boolean var7 = var6.setBlockIDWithMetadata(var1 & 15, var2, var3 & 15, var4, var5);
+				if(var7 && var4 == 0) {
+					WaveSurvivalManager.clearPlayerPlacedBlock(this, var1, var2, var3);
+				}
+
+				return var7;
 			}
 		} else {
 			return false;
@@ -382,7 +387,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var5 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				boolean var6 = var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				if(var6 && var4 == 0) {
+					WaveSurvivalManager.clearPlayerPlacedBlock(this, var1, var2, var3);
+				}
+
+				return var6;
 			}
 		} else {
 			return false;
@@ -1768,6 +1778,7 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		WaveSurvivalManager.tickWorld(this);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
 	}
