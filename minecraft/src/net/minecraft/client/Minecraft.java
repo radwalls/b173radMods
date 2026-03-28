@@ -47,6 +47,7 @@ import net.minecraft.src.IChunkProvider;
 import net.minecraft.src.ISaveFormat;
 import net.minecraft.src.ISaveHandler;
 import net.minecraft.src.ItemRenderer;
+import net.minecraft.src.ItemPickaxe;
 import net.minecraft.src.ItemStack;
 import net.minecraft.src.LoadingScreenRenderer;
 import net.minecraft.src.MathHelper;
@@ -130,6 +131,8 @@ public abstract class Minecraft implements Runnable {
 	private ThreadDownloadResources downloadResourcesThread;
 	private int ticksRan = 0;
 	private int leftClickCounter = 0;
+	private int chargedMiningTicks = 0;
+	private static final int MAX_CHARGED_MINING_TICKS = 30;
 	private int tempDisplayWidth;
 	private int tempDisplayHeight;
 	public GuiAchievement guiAchievement = new GuiAchievement(this);
@@ -785,6 +788,30 @@ public abstract class Minecraft implements Runnable {
 		}
 	}
 
+	private void updateChargedMiningState(boolean var1) {
+		if(var1 && this.canUseChargedMining()) {
+			if(this.chargedMiningTicks < MAX_CHARGED_MINING_TICKS) {
+				++this.chargedMiningTicks;
+			}
+		} else if(this.chargedMiningTicks > 0) {
+			--this.chargedMiningTicks;
+		}
+
+		if(this.playerController != null) {
+			float var2 = (float)this.chargedMiningTicks / (float)MAX_CHARGED_MINING_TICKS;
+			this.playerController.setChargedMiningLevel(var2);
+		}
+	}
+
+	private boolean canUseChargedMining() {
+		if(this.thePlayer == null) {
+			return false;
+		} else {
+			ItemStack var1 = this.thePlayer.getCurrentEquippedItem();
+			return var1 != null && var1.getItem() instanceof ItemPickaxe;
+		}
+	}
+
 	private void clickMouse(int var1) {
 		if(var1 != 0 || this.leftClickCounter <= 0) {
 			if(var1 == 0) {
@@ -1008,7 +1035,9 @@ public abstract class Minecraft implements Runnable {
 													}
 												}
 
-												this.func_6254_a(0, this.currentScreen == null && Mouse.isButtonDown(0) && this.inGameHasFocus);
+												boolean var10 = this.currentScreen == null && Mouse.isButtonDown(0) && this.inGameHasFocus;
+												this.updateChargedMiningState(var10);
+												this.func_6254_a(0, var10);
 												break label301;
 											}
 

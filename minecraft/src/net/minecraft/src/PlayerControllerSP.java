@@ -10,6 +10,9 @@ public class PlayerControllerSP extends PlayerController {
 	private float prevBlockDamage = 0.0F;
 	private float field_1069_h = 0.0F;
 	private int blockHitWait = 0;
+	private float chargedMiningLevel = 0.0F;
+	private boolean isRemovingBlock = false;
+	private static final float BLOCK_DAMAGE_HEAL_RATE = 0.02F;
 
 	public PlayerControllerSP(Minecraft var1) {
 		super(var1);
@@ -43,19 +46,32 @@ public class PlayerControllerSP extends PlayerController {
 	public void clickBlock(int var1, int var2, int var3, int var4) {
 		this.mc.theWorld.onBlockHit(this.mc.thePlayer, var1, var2, var3, var4);
 		int var5 = this.mc.theWorld.getBlockId(var1, var2, var3);
+		if(var1 != this.field_1074_c || var2 != this.field_1073_d || var3 != this.field_1072_e) {
+			this.curBlockDamage = 0.0F;
+			this.prevBlockDamage = 0.0F;
+			this.field_1069_h = 0.0F;
+			this.field_1074_c = var1;
+			this.field_1073_d = var2;
+			this.field_1072_e = var3;
+		}
+
 		if(var5 > 0 && this.curBlockDamage == 0.0F) {
 			Block.blocksList[var5].onBlockClicked(this.mc.theWorld, var1, var2, var3, this.mc.thePlayer);
 		}
 
 		if(var5 > 0 && Block.blocksList[var5].blockStrength(this.mc.thePlayer) >= 1.0F) {
 			this.sendBlockRemoved(var1, var2, var3, var4);
+			this.chargedMiningLevel = 0.0F;
+		} else if(var5 > 0) {
+			this.applyChargedMiningBonus(var5);
+			this.isRemovingBlock = true;
 		}
 
 	}
 
 	public void resetBlockRemoving() {
-		this.curBlockDamage = 0.0F;
 		this.blockHitWait = 0;
+		this.isRemovingBlock = false;
 	}
 
 	public void sendBlockRemoving(int var1, int var2, int var3, int var4) {
@@ -81,6 +97,7 @@ public class PlayerControllerSP extends PlayerController {
 					this.prevBlockDamage = 0.0F;
 					this.field_1069_h = 0.0F;
 					this.blockHitWait = 5;
+					this.isRemovingBlock = false;
 				}
 			} else {
 				this.curBlockDamage = 0.0F;
@@ -115,7 +132,34 @@ public class PlayerControllerSP extends PlayerController {
 	}
 
 	public void updateController() {
+		if(!this.isRemovingBlock && this.curBlockDamage > 0.0F) {
+			this.curBlockDamage -= BLOCK_DAMAGE_HEAL_RATE;
+			if(this.curBlockDamage < 0.0F) {
+				this.curBlockDamage = 0.0F;
+				this.prevBlockDamage = 0.0F;
+				this.field_1069_h = 0.0F;
+			}
+		}
+
 		this.prevBlockDamage = this.curBlockDamage;
 		this.mc.sndManager.playRandomMusicIfReady();
+	}
+
+	public void setChargedMiningLevel(float var1) {
+		this.chargedMiningLevel = var1;
+	}
+
+	private void applyChargedMiningBonus(int var1) {
+		ItemStack var2 = this.mc.thePlayer.getCurrentEquippedItem();
+		if(var2 != null && var2.getItem() instanceof ItemPickaxe) {
+			EnumToolMaterial var3 = ((ItemTool)var2.getItem()).toolMaterial;
+			float var4 = 0.35F + (float)var3.getHarvestLevel() * 0.2F;
+			this.curBlockDamage += this.chargedMiningLevel * var4;
+			if(this.curBlockDamage > 1.0F) {
+				this.curBlockDamage = 1.0F;
+			}
+
+			this.chargedMiningLevel = 0.0F;
+		}
 	}
 }

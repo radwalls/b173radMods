@@ -13,6 +13,8 @@ public class PlayerControllerMP extends PlayerController {
 	private boolean isHittingBlock = false;
 	private NetClientHandler netClientHandler;
 	private int currentPlayerItem = 0;
+	private float chargedMiningLevel = 0.0F;
+	private static final float BLOCK_DAMAGE_HEAL_RATE = 0.02F;
 
 	public PlayerControllerMP(Minecraft var1, NetClientHandler var2) {
 		super(var1);
@@ -48,6 +50,7 @@ public class PlayerControllerMP extends PlayerController {
 
 			if(var5 > 0 && Block.blocksList[var5].blockStrength(this.mc.thePlayer) >= 1.0F) {
 				this.sendBlockRemoved(var1, var2, var3, var4);
+				this.chargedMiningLevel = 0.0F;
 			} else {
 				this.isHittingBlock = true;
 				this.currentBlockX = var1;
@@ -56,13 +59,13 @@ public class PlayerControllerMP extends PlayerController {
 				this.curBlockDamageMP = 0.0F;
 				this.prevBlockDamageMP = 0.0F;
 				this.field_9441_h = 0.0F;
+				this.applyChargedMiningBonus(var5);
 			}
 		}
 
 	}
 
 	public void resetBlockRemoving() {
-		this.curBlockDamageMP = 0.0F;
 		this.isHittingBlock = false;
 	}
 
@@ -125,8 +128,35 @@ public class PlayerControllerMP extends PlayerController {
 
 	public void updateController() {
 		this.syncCurrentPlayItem();
+		if(!this.isHittingBlock && this.curBlockDamageMP > 0.0F) {
+			this.curBlockDamageMP -= BLOCK_DAMAGE_HEAL_RATE;
+			if(this.curBlockDamageMP < 0.0F) {
+				this.curBlockDamageMP = 0.0F;
+				this.prevBlockDamageMP = 0.0F;
+				this.field_9441_h = 0.0F;
+			}
+		}
+
 		this.prevBlockDamageMP = this.curBlockDamageMP;
 		this.mc.sndManager.playRandomMusicIfReady();
+	}
+
+	public void setChargedMiningLevel(float var1) {
+		this.chargedMiningLevel = var1;
+	}
+
+	private void applyChargedMiningBonus(int var1) {
+		ItemStack var2 = this.mc.thePlayer.getCurrentEquippedItem();
+		if(var1 > 0 && var2 != null && var2.getItem() instanceof ItemPickaxe) {
+			EnumToolMaterial var3 = ((ItemTool)var2.getItem()).toolMaterial;
+			float var4 = 0.35F + (float)var3.getHarvestLevel() * 0.2F;
+			this.curBlockDamageMP += this.chargedMiningLevel * var4;
+			if(this.curBlockDamageMP > 1.0F) {
+				this.curBlockDamageMP = 1.0F;
+			}
+
+			this.chargedMiningLevel = 0.0F;
+		}
 	}
 
 	private void syncCurrentPlayItem() {

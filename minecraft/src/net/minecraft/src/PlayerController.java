@@ -65,6 +65,9 @@ public class PlayerController {
 	public void updateController() {
 	}
 
+	public void setChargedMiningLevel(float var1) {
+	}
+
 	public boolean shouldDrawHUD() {
 		return true;
 	}
