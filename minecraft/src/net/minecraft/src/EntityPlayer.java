@@ -35,6 +35,7 @@ public abstract class EntityPlayer extends EntityLiving {
 	public float timeInPortal;
 	public float prevTimeInPortal;
 	private int damageRemainder = 0;
+	private int spyglassUseTicks = 0;
 	public EntityFish fishEntity = null;
 
 	public EntityPlayer(World var1) {
@@ -57,6 +58,10 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public void onUpdate() {
+		if(this.spyglassUseTicks > 0) {
+			--this.spyglassUseTicks;
+		}
+
 		if(this.isPlayerSleeping()) {
 			++this.sleepTimer;
 			if(this.sleepTimer > 100) {
@@ -474,6 +479,17 @@ public abstract class EntityPlayer extends EntityLiving {
 
 	public void destroyCurrentEquippedItem() {
 		this.inventory.setInventorySlotContents(this.inventory.currentItem, (ItemStack)null);
+	}
+
+	public void setSpyglassUseTicks(int var1) {
+		if(var1 > this.spyglassUseTicks) {
+			this.spyglassUseTicks = var1;
+		}
+	}
+
+	public boolean isUsingSpyglass() {
+		ItemStack var1 = this.getCurrentEquippedItem();
+		return this.spyglassUseTicks > 0 && var1 != null && var1.itemID == Item.spyglass.shiftedIndex;
 	}
 
 	public double getYOffset() {
