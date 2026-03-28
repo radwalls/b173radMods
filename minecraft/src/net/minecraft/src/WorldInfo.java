@@ -18,6 +18,7 @@ public class WorldInfo {
 	private int rainTime;
 	private boolean thundering;
 	private int thunderTime;
+	private NBTTagCompound redWaveTag;
 
 	public WorldInfo(NBTTagCompound var1) {
 		this.randomSeed = var1.getLong("RandomSeed");
@@ -33,6 +34,9 @@ public class WorldInfo {
 		this.raining = var1.getBoolean("raining");
 		this.thunderTime = var1.getInteger("thunderTime");
 		this.thundering = var1.getBoolean("thundering");
+		if(var1.hasKey("RedWave")) {
+			this.redWaveTag = var1.getCompoundTag("RedWave");
+		}
 		if(var1.hasKey("Player")) {
 			this.playerTag = var1.getCompoundTag("Player");
 			this.dimension = this.playerTag.getInteger("Dimension");
@@ -61,6 +65,7 @@ public class WorldInfo {
 		this.raining = var1.raining;
 		this.thunderTime = var1.thunderTime;
 		this.thundering = var1.thundering;
+		this.redWaveTag = var1.redWaveTag;
 	}
 
 	public NBTTagCompound getNBTTagCompound() {
@@ -100,6 +105,9 @@ public class WorldInfo {
 		var1.setBoolean("raining", this.raining);
 		var1.setInteger("thunderTime", this.thunderTime);
 		var1.setBoolean("thundering", this.thundering);
+		if(this.redWaveTag != null) {
+			var1.setCompoundTag("RedWave", this.redWaveTag);
+		}
 		if(var2 != null) {
 			var1.setCompoundTag("Player", var2);
 		}
@@ -218,5 +226,13 @@ public class WorldInfo {
 
 	public void setRainTime(int var1) {
 		this.rainTime = var1;
+	}
+
+	public NBTTagCompound getRedWaveTag() {
+		return this.redWaveTag;
+	}
+
+	public void setRedWaveTag(NBTTagCompound var1) {
+		this.redWaveTag = var1;
 	}
 }
