@@ -141,6 +141,10 @@ public class EntityRenderer {
 			var3 = 60.0F;
 		}
 
+		if(this.isSpyglassActive()) {
+			var3 = 20.0F;
+		}
+
 		if(var2.health <= 0) {
 			float var4 = (float)var2.deathTime + var1;
 			var3 /= (1.0F - 500.0F / (var4 + 500.0F)) * 2.0F + 1.0F;
@@ -260,6 +264,9 @@ public class EntityRenderer {
 
 	private void setupCameraTransform(float var1, int var2) {
 		this.farPlaneDistance = (float)(256 >> this.mc.gameSettings.renderDistance);
+		if(this.isSpyglassActive()) {
+			this.farPlaneDistance *= 1.5F;
+		}
 		GL11.glMatrixMode(GL11.GL_PROJECTION);
 		GL11.glLoadIdentity();
 		float var3 = 0.07F;
@@ -296,6 +303,10 @@ public class EntityRenderer {
 		}
 
 		this.orientCamera(var1);
+	}
+
+	private boolean isSpyglassActive() {
+		return this.mc.renderViewEntity instanceof EntityPlayer && ((EntityPlayer)this.mc.renderViewEntity).isUsingSpyglass();
 	}
 
 	private void func_4135_b(float var1, int var2) {
