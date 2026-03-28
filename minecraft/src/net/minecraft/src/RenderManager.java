@@ -30,6 +30,9 @@ public class RenderManager {
 		this.entityRenderMap.put(EntityCow.class, new RenderCow(new ModelCow(), 0.7F));
 		this.entityRenderMap.put(EntityWolf.class, new RenderWolf(new ModelWolf(), 0.5F));
 		this.entityRenderMap.put(EntityChicken.class, new RenderChicken(new ModelChicken(), 0.3F));
+		this.entityRenderMap.put(EntitySeagull.class, new RenderBird(new ModelChicken(), 0.3F, -2039584));
+		this.entityRenderMap.put(EntityCrow.class, new RenderBird(new ModelChicken(), 0.3F, -13619152));
+		this.entityRenderMap.put(EntityHawk.class, new RenderBird(new ModelChicken(), 0.3F, -5861254));
 		this.entityRenderMap.put(EntityCreeper.class, new RenderCreeper());
 		this.entityRenderMap.put(EntitySkeleton.class, new RenderBiped(new ModelSkeleton(), 0.5F));
 		this.entityRenderMap.put(EntityZombie.class, new RenderBiped(new ModelZombie(), 0.5F));
