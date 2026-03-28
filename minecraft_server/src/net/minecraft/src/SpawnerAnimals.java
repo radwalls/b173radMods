@@ -253,42 +253,57 @@ public final class SpawnerAnimals {
 		}
 
 		int var1 = (int)(var0.getWorldTime() / 48000L);
-		if(var1 <= 0 || var1 <= var0.worldInfo.getLastWaveNumber()) {
+		boolean var2 = false;
+		EntityPlayer var3 = null;
+
+		for(int var4 = 0; var4 < var0.playerEntities.size(); ++var4) {
+			EntityPlayer var5 = (EntityPlayer)var0.playerEntities.get(var4);
+			if(var5.func_22057_E()) {
+				var2 = true;
+				var3 = var5;
+				break;
+			}
+		}
+
+		if(!var2 && (var1 <= 0 || var1 <= var0.worldInfo.getLastWaveNumber())) {
 			return;
 		}
 
-		EntityPlayer var2 = (EntityPlayer)var0.playerEntities.get(var0.rand.nextInt(var0.playerEntities.size()));
-		int var3 = 4 + var1 * 3 + var0.playerEntities.size() * 2;
-		int var4 = 0;
+		if(var3 == null) {
+			var3 = (EntityPlayer)var0.playerEntities.get(var0.rand.nextInt(var0.playerEntities.size()));
+		}
 
-		for(int var5 = 0; var5 < var3; ++var5) {
-			double var6 = var0.rand.nextDouble() * Math.PI * 2.0D;
-			double var8 = 96.0D + (double)var0.rand.nextInt(48);
-			int var10 = MathHelper.floor_double(var2.posX + Math.cos(var6) * var8);
-			int var11 = MathHelper.floor_double(var2.posZ + Math.sin(var6) * var8);
-			int var12 = var0.getFirstUncoveredBlock(var10, var11);
-			if(func_21167_a(EnumCreatureType.monster, var0, var10, var12, var11)) {
-				EntityLiving var13;
+		int var6 = 4 + Math.max(var1, 1) * 3 + var0.playerEntities.size() * 2;
+		int var7 = 0;
+
+		for(int var8 = 0; var8 < var6; ++var8) {
+			double var9 = var0.rand.nextDouble() * Math.PI * 2.0D;
+			double var11 = 96.0D + (double)var0.rand.nextInt(48);
+			int var13 = MathHelper.floor_double(var3.posX + Math.cos(var9) * var11);
+			int var14 = MathHelper.floor_double(var3.posZ + Math.sin(var9) * var11);
+			int var15 = var0.getFirstUncoveredBlock(var13, var14);
+			if(func_21167_a(EnumCreatureType.monster, var0, var13, var15, var14)) {
+				EntityLiving var16;
 				try {
-					Class var14 = waveSpawnEntities[var0.rand.nextInt(waveSpawnEntities.length)];
-					var13 = (EntityLiving)var14.getConstructor(new Class[]{World.class}).newInstance(new Object[]{var0});
-				} catch (Exception var15) {
+					Class var17 = waveSpawnEntities[var0.rand.nextInt(waveSpawnEntities.length)];
+					var16 = (EntityLiving)var17.getConstructor(new Class[]{World.class}).newInstance(new Object[]{var0});
+				} catch (Exception var18) {
 					continue;
 				}
 
-				var13.setLocationAndAngles((double)var10 + 0.5D, (double)var12, (double)var11 + 0.5D, var0.rand.nextFloat() * 360.0F, 0.0F);
-				if(var13.getCanSpawnHere()) {
-					if(var13 instanceof EntityMob) {
-						((EntityMob)var13).setWaveMob(true);
+				var16.setLocationAndAngles((double)var13 + 0.5D, (double)var15, (double)var14 + 0.5D, var0.rand.nextFloat() * 360.0F, 0.0F);
+				if(var16.getCanSpawnHere()) {
+					if(var16 instanceof EntityMob) {
+						((EntityMob)var16).setWaveMob(true);
 					}
 
-					var0.entityJoinedWorld(var13);
-					++var4;
+					var0.entityJoinedWorld(var16);
+					++var7;
 				}
 			}
 		}
 
-		if(var4 > 0) {
+		if(var7 > 0 && !var2) {
 			var0.worldInfo.setLastWaveNumber(var1);
 		}
 	}
