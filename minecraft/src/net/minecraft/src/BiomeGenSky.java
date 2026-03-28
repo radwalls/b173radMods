@@ -5,7 +5,7 @@ public class BiomeGenSky extends BiomeGenBase {
 		this.spawnableMonsterList.clear();
 		this.spawnableCreatureList.clear();
 		this.spawnableWaterCreatureList.clear();
-		this.spawnableCreatureList.add(new SpawnListEntry(EntityChicken.class, 10));
+		this.spawnableMonsterList.add(new SpawnListEntry(EntityCreeper.class, 5000));
 	}
 
 	public int getSkyColorByTemp(float var1) {
