@@ -122,6 +122,10 @@ public class EntityCreeper extends EntityMob {
 		return this.dataWatcher.getWatchableObjectByte(17) == 1;
 	}
 
+	public int getMaxSpawnedInChunk() {
+		return 128;
+	}
+
 	protected int getDropItemId() {
 		return Item.gunpowder.shiftedIndex;
 	}

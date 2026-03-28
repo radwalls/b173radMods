@@ -4,7 +4,6 @@ import java.util.Random;
 
 public class BiomeGenForest extends BiomeGenBase {
 	public BiomeGenForest() {
-		this.spawnableCreatureList.add(new SpawnListEntry(EntityWolf.class, 2));
 	}
 
 	public WorldGenerator getRandomWorldGenForTrees(Random var1) {

@@ -126,6 +126,10 @@ public class EntityCreeper extends EntityMob {
 		return ((float)this.lastActiveTime + (float)(this.timeSinceIgnited - this.lastActiveTime) * var1) / 28.0F;
 	}
 
+	public int getMaxSpawnedInChunk() {
+		return 128;
+	}
+
 	protected int getDropItemId() {
 		return Item.gunpowder.shiftedIndex;
 	}

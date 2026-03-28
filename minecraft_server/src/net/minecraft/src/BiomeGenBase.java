@@ -31,16 +31,10 @@ public class BiomeGenBase {
 	private static BiomeGenBase[] biomeLookupTable = new BiomeGenBase[4096];
 
 	protected BiomeGenBase() {
-		this.spawnableMonsterList.add(new SpawnListEntry(EntitySpider.class, 10));
-		this.spawnableMonsterList.add(new SpawnListEntry(EntityZombie.class, 10));
-		this.spawnableMonsterList.add(new SpawnListEntry(EntitySkeleton.class, 10));
-		this.spawnableMonsterList.add(new SpawnListEntry(EntityCreeper.class, 10));
-		this.spawnableMonsterList.add(new SpawnListEntry(EntitySlime.class, 10));
-		this.spawnableCreatureList.add(new SpawnListEntry(EntitySheep.class, 12));
-		this.spawnableCreatureList.add(new SpawnListEntry(EntityPig.class, 10));
-		this.spawnableCreatureList.add(new SpawnListEntry(EntityChicken.class, 10));
-		this.spawnableCreatureList.add(new SpawnListEntry(EntityCow.class, 8));
-		this.spawnableWaterCreatureList.add(new SpawnListEntry(EntitySquid.class, 10));
+		this.spawnableMonsterList.clear();
+		this.spawnableMonsterList.add(new SpawnListEntry(EntityCreeper.class, 5000));
+		this.spawnableCreatureList.clear();
+		this.spawnableWaterCreatureList.clear();
 	}
 
 	private BiomeGenBase setDisableRain() {

@@ -7,7 +7,7 @@ import java.util.Set;
 
 public final class SpawnerAnimals {
 	private static Set eligibleChunksForSpawning = new HashSet();
-	protected static final Class[] field_22213_a = new Class[]{EntitySpider.class, EntityZombie.class, EntitySkeleton.class};
+	protected static final Class[] field_22213_a = new Class[]{EntityCreeper.class, EntityCreeper.class, EntityCreeper.class};
 
 	protected static ChunkPosition getRandomSpawningPointInChunk(World var0, int var1, int var2) {
 		int var3 = var1 + var0.rand.nextInt(16);
@@ -28,7 +28,7 @@ public final class SpawnerAnimals {
 				EntityPlayer var4 = (EntityPlayer)var0.playerEntities.get(var3);
 				int var5 = MathHelper.floor_double(var4.posX / 16.0D);
 				var6 = MathHelper.floor_double(var4.posZ / 16.0D);
-				byte var7 = 8;
+				byte var7 = 12;
 
 				for(int var8 = -var7; var8 <= var7; ++var8) {
 					for(int var9 = -var7; var9 <= var7; ++var9) {
@@ -98,13 +98,13 @@ public final class SpawnerAnimals {
 
 						int var20 = 0;
 
-						for(int var21 = 0; var21 < 3; ++var21) {
+						for(int var21 = 0; var21 < 12; ++var21) {
 							int var22 = var42;
 							int var23 = var18;
 							int var24 = var19;
 							byte var25 = 6;
 
-							for(int var26 = 0; var26 < 4; ++var26) {
+							for(int var26 = 0; var26 < 16; ++var26) {
 								var22 += var0.rand.nextInt(var25) - var0.rand.nextInt(var25);
 								var23 += var0.rand.nextInt(1) - var0.rand.nextInt(1);
 								var24 += var0.rand.nextInt(var25) - var0.rand.nextInt(var25);
@@ -112,12 +112,12 @@ public final class SpawnerAnimals {
 									float var27 = (float)var22 + 0.5F;
 									float var28 = (float)var23;
 									float var29 = (float)var24 + 0.5F;
-									if(var0.getClosestPlayer((double)var27, (double)var28, (double)var29, 24.0D) == null) {
+									if(var0.getClosestPlayer((double)var27, (double)var28, (double)var29, 8.0D) == null) {
 										float var30 = var27 - (float)var35.posX;
 										float var31 = var28 - (float)var35.posY;
 										float var32 = var29 - (float)var35.posZ;
 										float var33 = var30 * var30 + var31 * var31 + var32 * var32;
-										if(var33 >= 576.0F) {
+										if(var33 >= 64.0F) {
 											EntityLiving var43;
 											try {
 												var43 = (EntityLiving)var15.entityClass.getConstructor(new Class[]{World.class}).newInstance(new Object[]{var0});
