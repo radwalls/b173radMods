@@ -5,6 +5,7 @@ import java.util.Random;
 public class BiomeGenTaiga extends BiomeGenBase {
 	public BiomeGenTaiga() {
 		this.spawnableCreatureList.add(new SpawnListEntry(EntityWolf.class, 2));
+		this.spawnableCreatureList.add(new SpawnListEntry(EntityHawk.class, 5));
 	}
 
 	public WorldGenerator getRandomWorldGenForTrees(Random var1) {
