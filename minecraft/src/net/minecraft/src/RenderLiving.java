@@ -31,6 +31,11 @@ public class RenderLiving extends Render {
 		}
 
 		try {
+			boolean var27 = var1 instanceof EntityMob && ((EntityMob)var1).isRedWaveMob();
+			if(var27) {
+				GL11.glColor4f(1.0F, 0.2F, 0.2F, 1.0F);
+			}
+
 			float var10 = var1.prevRenderYawOffset + (var1.renderYawOffset - var1.prevRenderYawOffset) * var9;
 			float var11 = var1.prevRotationYaw + (var1.rotationYaw - var1.prevRotationYaw) * var9;
 			float var12 = var1.prevRotationPitch + (var1.rotationPitch - var1.prevRotationPitch) * var9;
@@ -109,6 +114,7 @@ public class RenderLiving extends Render {
 			var24.printStackTrace();
 		}
 
+		GL11.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
 		GL11.glEnable(GL11.GL_CULL_FACE);
 		GL11.glPopMatrix();
 		this.passSpecialRender(var1, var2, var4, var6);

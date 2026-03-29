@@ -98,9 +98,9 @@ public class EntityCreeper extends EntityMob {
 				++this.timeSinceIgnited;
 				if(this.timeSinceIgnited >= 30) {
 					if(this.getPowered()) {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 6.0F);
+						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, this.isRedWaveCreeper() ? 8.0F : 6.0F);
 					} else {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 3.0F);
+						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, this.isRedWaveCreeper() ? 5.0F : 3.0F);
 					}
 
 					this.setEntityDead();

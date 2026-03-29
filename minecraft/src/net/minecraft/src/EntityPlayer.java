@@ -611,6 +611,7 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public void wakeUpPlayer(boolean var1, boolean var2, boolean var3) {
+		boolean var6 = this.sleeping;
 		this.setSize(0.6F, 1.8F);
 		this.resetHeight();
 		ChunkCoordinates var4 = this.bedChunkCoordinates;
@@ -638,6 +639,10 @@ public abstract class EntityPlayer extends EntityLiving {
 
 		if(var3) {
 			this.setPlayerSpawnCoordinate(this.bedChunkCoordinates);
+		}
+
+		if(var6 && !this.worldObj.multiplayerWorld) {
+			RedWaveSystem.onPlayerWake(this);
 		}
 
 	}
