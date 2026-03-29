@@ -54,8 +54,9 @@ public class EntityCreeper extends EntityMob {
 				this.timeSinceIgnited = 0;
 			}
 
-			if(this.timeSinceIgnited >= 30) {
-				this.timeSinceIgnited = 30;
+			int var5 = this.isRedWaveCreeper() ? 20 : 30;
+			if(this.timeSinceIgnited >= var5) {
+				this.timeSinceIgnited = var5;
 			}
 		}
 
@@ -89,19 +90,22 @@ public class EntityCreeper extends EntityMob {
 	protected void attackEntity(Entity var1, float var2) {
 		if(!this.worldObj.multiplayerWorld) {
 			int var3 = this.getCreeperState();
-			if(var3 <= 0 && var2 < 3.0F || var3 > 0 && var2 < 7.0F) {
+			float var4 = this.isRedWaveCreeper() ? 9.0F : 7.0F;
+			if(var3 <= 0 && var2 < 3.0F || var3 > 0 && var2 < var4) {
 				if(this.timeSinceIgnited == 0) {
 					this.worldObj.playSoundAtEntity(this, "random.fuse", 1.0F, 0.5F);
 				}
 
 				this.setCreeperState(1);
 				++this.timeSinceIgnited;
-				if(this.timeSinceIgnited >= 30) {
+				int var5 = this.isRedWaveCreeper() ? 20 : 30;
+				if(this.timeSinceIgnited >= var5) {
+					float var6 = this.isRedWaveCreeper() ? 5.0F : 3.0F;
 					if(this.getPowered()) {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 6.0F);
-					} else {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 3.0F);
+						var6 += 3.0F;
 					}
+
+					this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, var6);
 
 					this.setEntityDead();
 				}

@@ -54,6 +54,8 @@ public class World implements IBlockAccess {
 	private int soundCounter;
 	private List field_1012_M;
 	public boolean multiplayerWorld;
+	private RedWaveSystem redWaveSystem;
+	private HashSet playerPlacedBlocks;
 
 	public WorldChunkManager getWorldChunkManager() {
 		return this.worldProvider.worldChunkMgr;
@@ -90,6 +92,8 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.redWaveSystem = new RedWaveSystem();
+		this.playerPlacedBlocks = new HashSet();
 		this.saveHandler = var1;
 		this.worldInfo = new WorldInfo(var4, var2);
 		this.worldProvider = var3;
@@ -131,6 +135,8 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.redWaveSystem = new RedWaveSystem();
+		this.playerPlacedBlocks = new HashSet();
 		this.lockTimestamp = var1.lockTimestamp;
 		this.saveHandler = var1.saveHandler;
 		this.worldInfo = new WorldInfo(var1.worldInfo);
@@ -177,6 +183,8 @@ public class World implements IBlockAccess {
 		this.soundCounter = this.rand.nextInt(12000);
 		this.field_1012_M = new ArrayList();
 		this.multiplayerWorld = false;
+		this.redWaveSystem = new RedWaveSystem();
+		this.playerPlacedBlocks = new HashSet();
 		this.saveHandler = var1;
 		this.field_28108_z = new MapStorage(var1);
 		this.worldInfo = var1.loadWorldInfo();
@@ -367,7 +375,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var6 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var6.setBlockIDWithMetadata(var1 & 15, var2, var3 & 15, var4, var5);
+				boolean var7 = var6.setBlockIDWithMetadata(var1 & 15, var2, var3 & 15, var4, var5);
+				if(var7 && var4 == 0) {
+					this.unmarkPlayerPlacedBlock(var1, var2, var3);
+				}
+
+				return var7;
 			}
 		} else {
 			return false;
@@ -382,7 +395,12 @@ public class World implements IBlockAccess {
 				return false;
 			} else {
 				Chunk var5 = this.getChunkFromChunkCoords(var1 >> 4, var3 >> 4);
-				return var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				boolean var6 = var5.setBlockID(var1 & 15, var2, var3 & 15, var4);
+				if(var6 && var4 == 0) {
+					this.unmarkPlayerPlacedBlock(var1, var2, var3);
+				}
+
+				return var6;
 			}
 		} else {
 			return false;
@@ -1768,6 +1786,7 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		this.redWaveSystem.tick(this);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
 	}
@@ -2341,6 +2360,65 @@ public class World implements IBlockAccess {
 			Block.blocksList[var6].playBlock(this, var1, var2, var3, var4, var5);
 		}
 
+	}
+
+	public void onPlayerWokeUpFromSleep(EntityPlayer var1) {
+		this.redWaveSystem.onPlayerWokeUp(this, var1);
+	}
+
+	public void markPlayerPlacedBlock(int var1, int var2, int var3) {
+		this.playerPlacedBlocks.add(Long.valueOf(this.toBlockKey(var1, var2, var3)));
+	}
+
+	private void unmarkPlayerPlacedBlock(int var1, int var2, int var3) {
+		this.playerPlacedBlocks.remove(Long.valueOf(this.toBlockKey(var1, var2, var3)));
+	}
+
+	public boolean isPlayerPlacedBlock(int var1, int var2, int var3) {
+		return this.playerPlacedBlocks.contains(Long.valueOf(this.toBlockKey(var1, var2, var3)));
+	}
+
+	public ChunkCoordinates findDensePlayerBuiltCluster(int var1, int var2, int var3, int var4, int var5) {
+		int var6 = 0;
+		ChunkCoordinates var7 = null;
+
+		for(int var8 = var1 - var4; var8 <= var1 + var4; var8 += 3) {
+			for(int var9 = var3 - var4; var9 <= var3 + var4; var9 += 3) {
+				int var10 = this.getHeightValue(var8, var9);
+				if(var10 > 0) {
+					int var11 = this.countPlayerPlacedBlocks(var8, var10, var9, var5);
+					if(var11 > var6) {
+						var6 = var11;
+						var7 = new ChunkCoordinates(var8, var10, var9);
+					}
+				}
+			}
+		}
+
+		return var6 >= 12 ? var7 : null;
+	}
+
+	public int countPlayerPlacedBlocks(int var1, int var2, int var3, int var4) {
+		int var5 = 0;
+
+		for(int var6 = -var4; var6 <= var4; ++var6) {
+			for(int var7 = -var4; var7 <= var4; ++var7) {
+				for(int var8 = -2; var8 <= 2; ++var8) {
+					if(this.isPlayerPlacedBlock(var1 + var6, var2 + var8, var3 + var7)) {
+						++var5;
+					}
+				}
+			}
+		}
+
+		return var5;
+	}
+
+	private long toBlockKey(int var1, int var2, int var3) {
+		long var4 = (long)(var1 + 33554432) & 67108863L;
+		long var6 = (long)var2 & 255L;
+		long var8 = (long)(var3 + 33554432) & 67108863L;
+		return var4 << 34 | var8 << 8 | var6;
 	}
 
 	public WorldInfo getWorldInfo() {
