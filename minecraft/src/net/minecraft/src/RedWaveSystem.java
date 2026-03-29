@@ -70,14 +70,27 @@ public final class RedWaveSystem {
 		}
 
 		if((var0.ticksExisted + var0.entityId) % 10 == 0) {
-			EntityPlayer var1 = var0.worldObj.getClosestPlayerToEntity(var0, -1.0D);
+			EntityPlayer var1 = findWavePlayerTarget(var0);
 			if(var1 != null) {
 				var0.setTarget(var1);
 				var0.setPathToEntity(var0.worldObj.getPathToEntity(var0, var1, 64.0F));
+			} else {
+				var0.setTarget((Entity)null);
+				pathTowardBuildCluster(var0);
 			}
 		}
 
 		tryBreakIntoStructures(var0);
+	}
+
+	public static EntityPlayer findWavePlayerTarget(EntityMob var0) {
+		EntityPlayer var1 = var0.worldObj.getClosestPlayerToEntity(var0, 96.0D);
+		if(var1 == null) {
+			return null;
+		}
+
+		float var2 = var1.getDistanceToEntity(var0);
+		return var2 <= 14.0F || var0.canEntityBeSeen(var1) ? var1 : null;
 	}
 
 	public static boolean isRedWaveMob(EntityLiving var0) {
@@ -198,7 +211,7 @@ public final class RedWaveSystem {
 
 	private static void tryBreakIntoStructures(EntityMob var0) {
 		Entity var1 = var0.getTarget();
-		if(!(var1 instanceof EntityPlayer)) {
+		if(var1 != null && !(var1 instanceof EntityPlayer)) {
 			return;
 		}
 
@@ -207,8 +220,12 @@ public final class RedWaveSystem {
 		int var4 = MathHelper.floor_double(var0.posY + 0.2D);
 		int var5 = MathHelper.floor_double(var0.posZ);
 		Vec3D var6 = Vec3D.createVector(var0.posX, var0.posY + (double)var0.getEyeHeight(), var0.posZ);
-		Vec3D var7 = Vec3D.createVector(var1.posX, var1.posY + (double)var1.getEyeHeight(), var1.posZ);
-		MovingObjectPosition var8 = var2.rayTraceBlocks(var6, var7);
+		MovingObjectPosition var8 = null;
+		if(var1 instanceof EntityPlayer) {
+			Vec3D var7 = Vec3D.createVector(var1.posX, var1.posY + (double)var1.getEyeHeight(), var1.posZ);
+			var8 = var2.rayTraceBlocks(var6, var7);
+		}
+
 		int var9 = var3;
 		int var10 = var4;
 		int var11 = var5;
@@ -220,46 +237,162 @@ public final class RedWaveSystem {
 			var9 = MathHelper.floor_double(var0.posX + var0.motionX * 2.0D);
 			var11 = MathHelper.floor_double(var0.posZ + var0.motionZ * 2.0D);
 		} else {
+			var0.redWaveAttackCooldown = 0;
+			var0.redWaveBlockHits = 0;
+			var0.redWaveBreakTarget = Long.MIN_VALUE;
 			return;
 		}
 
 		int var12 = var2.getBlockId(var9, var10, var11);
 		if(var12 <= 0 || var12 == Block.bedrock.blockID) {
+			var0.redWaveAttackCooldown = 0;
+			var0.redWaveBlockHits = 0;
+			var0.redWaveBreakTarget = Long.MIN_VALUE;
 			return;
 		}
 
-		int var13 = getClusterStrength(var2, var9, var10, var11, 4);
-		if(var13 < 10 && !var0.redWaveCreeper) {
+		long var13 = pack(var9, var10, var11);
+		if(!isPlayerBuiltBlock(var2, var13)) {
+			var0.redWaveAttackCooldown = 0;
+			var0.redWaveBlockHits = 0;
+			var0.redWaveBreakTarget = Long.MIN_VALUE;
 			return;
 		}
 
-		++var0.redWaveBreakProgress;
-		int var14 = var0.redWaveCreeper ? 12 : 55;
-		if(var13 > 25) {
-			var14 -= 8;
+		if(!isInBlockAttackRange(var0, var9, var10, var11)) {
+			return;
 		}
 
-		if(var0.redWaveBreakProgress >= var14) {
-			var0.redWaveBreakProgress = 0;
+		if(var0.redWaveBreakTarget != var13) {
+			var0.redWaveBreakTarget = var13;
+			var0.redWaveBlockHits = 0;
+			var0.redWaveAttackCooldown = 0;
+		}
+
+		if(var0.redWaveAttackCooldown > 0) {
+			--var0.redWaveAttackCooldown;
+			return;
+		}
+
+		int var14 = getBlockHitRequirement(var0, var12);
+		if(var14 <= 0) {
+			return;
+		}
+
+		++var0.redWaveBlockHits;
+		var0.redWaveAttackCooldown = getAttackDelay(var0);
+		if(var0.redWaveBlockHits >= var14) {
+			var0.redWaveBlockHits = 0;
+			var0.redWaveBreakTarget = Long.MIN_VALUE;
+			var0.redWaveAttackCooldown = 0;
 			var2.setBlockWithNotify(var9, var10, var11, 0);
 		}
 	}
 
-	private static int getClusterStrength(World var0, int var1, int var2, int var3, int var4) {
-		RedWaveState var5 = getState(var0);
-		int var6 = 0;
+	private static boolean isPlayerBuiltBlock(World var0, long var1) {
+		return getState(var0).playerBuiltBlocks.contains(Long.valueOf(var1));
+	}
 
-		for(int var7 = -var4; var7 <= var4; ++var7) {
-			for(int var8 = -2; var8 <= 2; ++var8) {
-				for(int var9 = -var4; var9 <= var4; ++var9) {
-					if(var5.playerBuiltBlocks.contains(Long.valueOf(pack(var1 + var7, var2 + var8, var3 + var9)))) {
-						++var6;
-					}
-				}
+	private static boolean isInBlockAttackRange(EntityMob var0, int var1, int var2, int var3) {
+		double var4 = (double)var1 + 0.5D - var0.posX;
+		double var6 = (double)var2 + 0.5D - (var0.posY + (double)(var0.height * 0.5F));
+		double var8 = (double)var3 + 0.5D - var0.posZ;
+		return var4 * var4 + var6 * var6 + var8 * var8 <= 3.6D;
+	}
+
+	private static int getAttackDelay(EntityMob var0) {
+		if(var0 instanceof EntitySkeleton) {
+			return 20;
+		}
+
+		if(var0.redWaveCreeper) {
+			return 8;
+		}
+
+		return 10;
+	}
+
+	private static int getBlockHitRequirement(EntityMob var0, int var1) {
+		Block var2 = Block.blocksList[var1];
+		if(var2 == null) {
+			return 0;
+		}
+
+		int var3 = 6;
+		if(var2.blockMaterial == Material.wood) {
+			var3 = 5;
+		} else if(var1 == Block.cobblestone.blockID || var2.blockMaterial == Material.rock) {
+			var3 = 10;
+		}
+
+		if(var0.redWaveCreeper) {
+			var3 = Math.max(3, var3 - 2);
+		}
+
+		return var3;
+	}
+
+	private static void pathTowardBuildCluster(EntityMob var0) {
+		int[] var1 = findNearestBuildBlock(var0.worldObj, var0.posX, var0.posY, var0.posZ, 96.0D);
+		if(var1 != null) {
+			var0.setPathToEntity(var0.worldObj.getEntityPathToXYZ(var0, var1[0], var1[1], var1[2], 64.0F));
+		}
+	}
+
+	private static int[] findNearestBuildBlock(World var0, double var1, double var3, double var5, double var7) {
+		RedWaveState var9 = getState(var0);
+		if(var9.playerBuiltBlocks.isEmpty()) {
+			return null;
+		}
+
+		double var10 = var7 * var7;
+		long var12 = Long.MIN_VALUE;
+		Iterator var14 = var9.playerBuiltBlocks.iterator();
+
+		while(var14.hasNext()) {
+			Long var15 = (Long)var14.next();
+			long var16 = var15.longValue();
+			int var18 = unpackX(var16);
+			int var19 = unpackY(var16);
+			int var20 = unpackZ(var16);
+			double var21 = (double)var18 + 0.5D - var1;
+			double var23 = (double)var19 + 0.5D - var3;
+			double var25 = (double)var20 + 0.5D - var5;
+			double var27 = var21 * var21 + var23 * var23 + var25 * var25;
+			if(var27 <= var10) {
+				var10 = var27;
+				var12 = var16;
 			}
 		}
 
-		return var6;
+		return var12 == Long.MIN_VALUE ? null : new int[]{unpackX(var12), unpackY(var12), unpackZ(var12)};
+	}
+
+	private static int unpackX(long var0) {
+		int var2 = (int)(var0 >> 38 & 33554431L);
+		if(var2 >= 16777216) {
+			var2 -= 33554432;
+		}
+
+		return var2;
+	}
+
+	private static int unpackY(long var0) {
+		int var2 = (int)(var0 >> 26 & 4095L);
+		if(var2 >= 2048) {
+			var2 -= 4096;
+		}
+
+		return var2;
+	}
+
+	private static int unpackZ(long var0) {
+		int var2 = (int)(var0 & 67108863L);
+		if(var2 >= 33554432) {
+			var2 -= 67108864;
+		}
+
+		return var2;
 	}
 
 	private static String buildDirectionList(EnumSet var0) {

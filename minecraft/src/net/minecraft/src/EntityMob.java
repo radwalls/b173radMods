@@ -6,6 +6,9 @@ public class EntityMob extends EntityCreature implements IMob {
 	public boolean redWaveCreeper = false;
 	public int redWaveLevel = 0;
 	public int redWaveBreakProgress = 0;
+	public long redWaveBreakTarget = Long.MIN_VALUE;
+	public int redWaveBlockHits = 0;
+	public int redWaveAttackCooldown = 0;
 
 	public EntityMob(World var1) {
 		super(var1);
@@ -32,7 +35,7 @@ public class EntityMob extends EntityCreature implements IMob {
 
 	protected Entity findPlayerToAttack() {
 		if(this.redWaveMob) {
-			return this.worldObj.getClosestPlayerToEntity(this, 128.0D);
+			return RedWaveSystem.findWavePlayerTarget(this);
 		}
 
 		EntityPlayer var1 = this.worldObj.getClosestPlayerToEntity(this, 16.0D);
