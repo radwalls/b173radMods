@@ -139,6 +139,38 @@ public class ConsoleCommandHandler {
 										var16 = var18[1];
 										var15 = var5.getPlayerEntity(var16);
 										if(var15 != null) {
+											if(var18[2].equalsIgnoreCase("cannon")) {
+												int var20 = 1;
+												if(var18.length > 3) {
+													var20 = this.tryParse(var18[3], 1);
+												}
+
+												if(var20 < 1) {
+													var20 = 1;
+												}
+
+												this.giveToInventoryOrDrop(var15, new ItemStack(Block.dispenser, var20, 0));
+												this.sendNoticeToOps(var4, "Gave " + var15.username + " " + var20 + " cannon(s)");
+												return;
+											}
+
+											if(var18[2].equalsIgnoreCase("cannonkit")) {
+												int var20 = 1;
+												if(var18.length > 3) {
+													var20 = this.tryParse(var18[3], 1);
+												}
+
+												if(var20 < 1) {
+													var20 = 1;
+												}
+
+												this.giveToInventoryOrDrop(var15, new ItemStack(Block.cobblestone, 7 * var20, 0));
+												this.giveToInventoryOrDrop(var15, new ItemStack(Item.bow, var20, 0));
+												this.giveToInventoryOrDrop(var15, new ItemStack(Item.redstone, var20, 0));
+												this.sendNoticeToOps(var4, "Gave " + var15.username + " " + var20 + " cannon crafting kit(s)");
+												return;
+											}
+
 											try {
 												var17 = Integer.parseInt(var18[2]);
 												if(Item.itemsList[var17] != null) {
@@ -156,7 +188,7 @@ public class ConsoleCommandHandler {
 														var10 = 64;
 													}
 
-													var15.dropPlayerItem(new ItemStack(var17, var10, 0));
+													this.giveToInventoryOrDrop(var15, new ItemStack(var17, var10, 0));
 												} else {
 													var3.log("There\'s no item with id " + var17);
 												}
@@ -283,6 +315,8 @@ public class ConsoleCommandHandler {
 		var1.log("   deop <player>             removes op status from a player");
 		var1.log("   tp <player1> <player2>    moves one player to the same location as another player");
 		var1.log("   give <player> <id> [num]  gives a player a resource");
+		var1.log("   give <player> cannon [n]  gives dispenser cannon(s)");
+		var1.log("   give <player> cannonkit   gives materials for cannon recipe");
 		var1.log("   tell <player> <message>   sends a private message to a player");
 		var1.log("   stop                      gracefully stops the server");
 		var1.log("   save-all                  forces a server-wide level save");
@@ -297,6 +331,18 @@ public class ConsoleCommandHandler {
 		String var3 = var1 + ": " + var2;
 		this.minecraftServer.configManager.sendChatMessageToAllOps("\u00a77(" + var3 + ")");
 		minecraftLogger.info(var3);
+	}
+
+	private void giveToInventoryOrDrop(EntityPlayerMP var1, ItemStack var2) {
+		while(var2.stackSize > 0) {
+			int var3 = Math.min(var2.stackSize, var2.getMaxStackSize());
+			ItemStack var4 = new ItemStack(var2.itemID, var3, var2.getItemDamage());
+			if(!var1.inventory.addItemStackToInventory(var4) && var4.stackSize > 0) {
+				var1.dropPlayerItem(var4);
+			}
+
+			var2.stackSize -= var3;
+		}
 	}
 
 	private int tryParse(String var1, int var2) {
