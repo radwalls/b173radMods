@@ -7,7 +7,7 @@ public class BlockDispenser extends BlockContainer {
 
 	protected BlockDispenser(int var1) {
 		super(var1, Material.rock);
-		this.blockIndexInTexture = 45;
+		this.blockIndexInTexture = 37;
 	}
 
 	public int tickRate() {
@@ -51,18 +51,11 @@ public class BlockDispenser extends BlockContainer {
 	}
 
 	public int getBlockTexture(IBlockAccess var1, int var2, int var3, int var4, int var5) {
-		if(var5 == 1) {
-			return this.blockIndexInTexture + 17;
-		} else if(var5 == 0) {
-			return this.blockIndexInTexture + 17;
-		} else {
-			int var6 = var1.getBlockMetadata(var2, var3, var4);
-			return var5 != var6 ? this.blockIndexInTexture : this.blockIndexInTexture + 1;
-		}
+		return this.blockIndexInTexture;
 	}
 
 	public int getBlockTextureFromSide(int var1) {
-		return var1 == 1 ? this.blockIndexInTexture + 17 : (var1 == 0 ? this.blockIndexInTexture + 17 : (var1 == 3 ? this.blockIndexInTexture + 1 : this.blockIndexInTexture));
+		return this.blockIndexInTexture;
 	}
 
 	public boolean blockActivated(World var1, int var2, int var3, int var4, EntityPlayer var5) {
@@ -97,7 +90,18 @@ public class BlockDispenser extends BlockContainer {
 		if(var12 == null) {
 			var1.func_28106_e(1001, var2, var3, var4, 0);
 		} else {
-			if(var12.itemID == Item.arrow.shiftedIndex) {
+			if(var12.itemID == Block.tnt.blockID) {
+				EntityTNTPrimed var19 = new EntityTNTPrimed(var1, var13, var15, var17);
+				double var20 = this.getArcModifierFromRepeaters(var1, var2, var3, var4, var9, var10);
+				double var22 = 2.35D;
+				var19.motionX = (double)var9 * var22;
+				var19.motionY = var20;
+				var19.motionZ = (double)var10 * var22;
+				var19.fuse = 55;
+				var19.explosionStrength = 7.5F;
+				var1.entityJoinedWorld(var19);
+				var1.func_28106_e(1002, var2, var3, var4, 0);
+			} else if(var12.itemID == Item.arrow.shiftedIndex) {
 				EntityArrow var19 = new EntityArrow(var1, var13, var15, var17);
 				var19.setArrowHeading((double)var9, (double)0.1F, (double)var10, 1.1F, 6.0F);
 				var19.doesArrowBelongToPlayer = true;
@@ -129,6 +133,27 @@ public class BlockDispenser extends BlockContainer {
 			var1.func_28106_e(2000, var2, var3, var4, var9 + 1 + (var10 + 1) * 3);
 		}
 
+	}
+
+	private double getArcModifierFromRepeaters(World var1, int var2, int var3, int var4, int var5, int var6) {
+		int var7 = -var6;
+		int var8 = var5;
+		int var9 = var6;
+		int var10 = -var5;
+		boolean var11 = this.isRepeater(var1, var2 + var7, var3, var4 + var8);
+		boolean var12 = this.isRepeater(var1, var2 + var9, var3, var4 + var10);
+		if(var11 && !var12) {
+			return 0.08D;
+		} else if(var12 && !var11) {
+			return 0.45D;
+		} else {
+			return 0.22D;
+		}
+	}
+
+	private boolean isRepeater(World var1, int var2, int var3, int var4) {
+		int var5 = var1.getBlockId(var2, var3, var4);
+		return var5 == Block.redstoneRepeaterIdle.blockID || var5 == Block.redstoneRepeaterActive.blockID;
 	}
 
 	public void onNeighborBlockChange(World var1, int var2, int var3, int var4, int var5) {
@@ -168,6 +193,14 @@ public class BlockDispenser extends BlockContainer {
 
 		if(var6 == 3) {
 			var1.setBlockMetadataWithNotify(var2, var3, var4, 4);
+		}
+
+		TileEntityDispenser var7 = (TileEntityDispenser)var1.getBlockTileEntity(var2, var3, var4);
+		if(var7 != null) {
+			var7.setInventorySlotContents(0, new ItemStack(Block.tnt.blockID, 64, 0));
+			var7.setInventorySlotContents(1, new ItemStack(Item.arrow.shiftedIndex, 64, 0));
+			var7.setInventorySlotContents(2, new ItemStack(Item.egg.shiftedIndex, 64, 0));
+			var7.setInventorySlotContents(3, new ItemStack(Item.snowball.shiftedIndex, 64, 0));
 		}
 
 	}
