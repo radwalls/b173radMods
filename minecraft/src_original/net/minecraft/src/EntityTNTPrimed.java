@@ -2,6 +2,7 @@ package net.minecraft.src;
 
 public class EntityTNTPrimed extends Entity {
 	public int fuse;
+	private float explosionPower = 4.0F;
 
 	public EntityTNTPrimed(World var1) {
 		super(var1);
@@ -64,16 +65,23 @@ public class EntityTNTPrimed extends Entity {
 	}
 
 	private void explode() {
-		float var1 = 4.0F;
-		this.worldObj.createExplosion((Entity)null, this.posX, this.posY, this.posZ, var1);
+		this.worldObj.createExplosion((Entity)null, this.posX, this.posY, this.posZ, this.explosionPower);
+	}
+
+	public void setExplosionPower(float var1) {
+		this.explosionPower = var1;
 	}
 
 	protected void writeEntityToNBT(NBTTagCompound var1) {
 		var1.setByte("Fuse", (byte)this.fuse);
+		var1.setFloat("ExplosionPower", this.explosionPower);
 	}
 
 	protected void readEntityFromNBT(NBTTagCompound var1) {
 		this.fuse = var1.getByte("Fuse");
+		if(var1.hasKey("ExplosionPower")) {
+			this.explosionPower = var1.getFloat("ExplosionPower");
+		}
 	}
 
 	public float getShadowSize() {
