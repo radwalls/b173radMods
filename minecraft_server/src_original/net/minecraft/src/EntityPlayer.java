@@ -33,6 +33,7 @@ public abstract class EntityPlayer extends EntityLiving {
 	public float timeInPortal;
 	private int damageRemainder = 0;
 	public EntityFish fishEntity = null;
+	private boolean cannonStarterKitGranted = false;
 
 	public EntityPlayer(World var1) {
 		super(var1);
@@ -119,6 +120,30 @@ public abstract class EntityPlayer extends EntityLiving {
 			this.field_27995_d = null;
 		}
 
+		if(!this.cannonStarterKitGranted) {
+			this.giveCannonStarterKit();
+		}
+
+	}
+
+	private void giveCannonStarterKit() {
+		this.cannonStarterKitGranted = true;
+		this.giveCannonKitStack(new ItemStack(Block.workbench));
+		this.giveCannonKitStack(new ItemStack(Block.dispenser));
+		this.giveCannonKitStack(new ItemStack(Block.lever));
+		this.giveCannonKitStack(new ItemStack(Block.redstoneRepeaterIdle, 2));
+		this.giveCannonKitStack(new ItemStack(Block.tnt, 24));
+		this.giveCannonKitStack(new ItemStack(Item.ingotIron, 6));
+		this.giveCannonKitStack(new ItemStack(Block.obsidian, 1));
+		this.giveCannonKitStack(new ItemStack(Item.redstone, 8));
+		this.giveCannonKitStack(new ItemStack(Block.torchRedstoneActive, 4));
+		this.giveCannonKitStack(new ItemStack(Block.stone, 6));
+	}
+
+	private void giveCannonKitStack(ItemStack var1) {
+		if(!this.inventory.addItemStackToInventory(var1)) {
+			this.dropPlayerItemWithRandomChoice(var1, false);
+		}
 	}
 
 	protected boolean isMovementBlocked() {
@@ -292,6 +317,7 @@ public abstract class EntityPlayer extends EntityLiving {
 		this.dimension = var1.getInteger("Dimension");
 		this.sleeping = var1.getBoolean("Sleeping");
 		this.sleepTimer = var1.getShort("SleepTimer");
+		this.cannonStarterKitGranted = var1.getBoolean("CannonStarterKitGranted");
 		if(this.sleeping) {
 			this.playerLocation = new ChunkCoordinates(MathHelper.floor_double(this.posX), MathHelper.floor_double(this.posY), MathHelper.floor_double(this.posZ));
 			this.wakeUpPlayer(true, true, false);
@@ -309,6 +335,7 @@ public abstract class EntityPlayer extends EntityLiving {
 		var1.setInteger("Dimension", this.dimension);
 		var1.setBoolean("Sleeping", this.sleeping);
 		var1.setShort("SleepTimer", (short)this.sleepTimer);
+		var1.setBoolean("CannonStarterKitGranted", this.cannonStarterKitGranted);
 		if(this.spawnChunk != null) {
 			var1.setInteger("SpawnX", this.spawnChunk.posX);
 			var1.setInteger("SpawnY", this.spawnChunk.posY);
