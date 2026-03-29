@@ -2,6 +2,10 @@ package net.minecraft.src;
 
 public class EntityMob extends EntityCreature implements IMob {
 	protected int attackStrength = 2;
+	public boolean redWaveMob = false;
+	public boolean redWaveCreeper = false;
+	public int redWaveLevel = 0;
+	public int redWaveBreakProgress = 0;
 
 	public EntityMob(World var1) {
 		super(var1);
@@ -15,6 +19,7 @@ public class EntityMob extends EntityCreature implements IMob {
 		}
 
 		super.onLivingUpdate();
+		RedWaveSystem.updateWaveMob(this);
 	}
 
 	public void onUpdate() {
@@ -26,6 +31,10 @@ public class EntityMob extends EntityCreature implements IMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.redWaveMob) {
+			return this.worldObj.getClosestPlayerToEntity(this, 128.0D);
+		}
+
 		EntityPlayer var1 = this.worldObj.getClosestPlayerToEntity(this, 16.0D);
 		return var1 != null && this.canEntityBeSeen(var1) ? var1 : null;
 	}
@@ -83,5 +92,9 @@ public class EntityMob extends EntityCreature implements IMob {
 
 			return var4 <= this.rand.nextInt(8) && super.getCanSpawnHere();
 		}
+	}
+
+	protected boolean canDespawn() {
+		return !this.redWaveMob && super.canDespawn();
 	}
 }

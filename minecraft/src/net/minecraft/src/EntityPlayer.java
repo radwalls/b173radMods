@@ -611,18 +611,19 @@ public abstract class EntityPlayer extends EntityLiving {
 	}
 
 	public void wakeUpPlayer(boolean var1, boolean var2, boolean var3) {
+		boolean var4 = this.sleeping;
 		this.setSize(0.6F, 1.8F);
 		this.resetHeight();
-		ChunkCoordinates var4 = this.bedChunkCoordinates;
 		ChunkCoordinates var5 = this.bedChunkCoordinates;
-		if(var4 != null && this.worldObj.getBlockId(var4.x, var4.y, var4.z) == Block.blockBed.blockID) {
-			BlockBed.setBedOccupied(this.worldObj, var4.x, var4.y, var4.z, false);
-			var5 = BlockBed.getNearestEmptyChunkCoordinates(this.worldObj, var4.x, var4.y, var4.z, 0);
-			if(var5 == null) {
-				var5 = new ChunkCoordinates(var4.x, var4.y + 1, var4.z);
+		ChunkCoordinates var6 = this.bedChunkCoordinates;
+		if(var5 != null && this.worldObj.getBlockId(var5.x, var5.y, var5.z) == Block.blockBed.blockID) {
+			BlockBed.setBedOccupied(this.worldObj, var5.x, var5.y, var5.z, false);
+			var6 = BlockBed.getNearestEmptyChunkCoordinates(this.worldObj, var5.x, var5.y, var5.z, 0);
+			if(var6 == null) {
+				var6 = new ChunkCoordinates(var5.x, var5.y + 1, var5.z);
 			}
 
-			this.setPosition((double)((float)var5.x + 0.5F), (double)((float)var5.y + this.yOffset + 0.1F), (double)((float)var5.z + 0.5F));
+			this.setPosition((double)((float)var6.x + 0.5F), (double)((float)var6.y + this.yOffset + 0.1F), (double)((float)var6.z + 0.5F));
 		}
 
 		this.sleeping = false;
@@ -638,6 +639,10 @@ public abstract class EntityPlayer extends EntityLiving {
 
 		if(var3) {
 			this.setPlayerSpawnCoordinate(this.bedChunkCoordinates);
+		}
+
+		if(var4) {
+			RedWaveSystem.onPlayerWake(this, var1, var2, var3);
 		}
 
 	}
