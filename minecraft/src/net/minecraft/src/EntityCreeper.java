@@ -94,14 +94,15 @@ public class EntityCreeper extends EntityMob {
 					this.worldObj.playSoundAtEntity(this, "random.fuse", 1.0F, 0.5F);
 				}
 
-				this.setCreeperState(1);
-				++this.timeSinceIgnited;
-				if(this.timeSinceIgnited >= 30) {
-					if(this.getPowered()) {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 6.0F);
-					} else {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 3.0F);
-					}
+					this.setCreeperState(1);
+					this.timeSinceIgnited += RedWaveSystem.isRedCreeper(this) ? 2 : 1;
+					int var4 = RedWaveSystem.isRedCreeper(this) ? 18 : 30;
+					if(this.timeSinceIgnited >= var4) {
+						if(this.getPowered()) {
+							this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, RedWaveSystem.isRedCreeper(this) ? 6.5F : 6.0F);
+						} else {
+							this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, RedWaveSystem.isRedCreeper(this) ? 4.0F : 3.0F);
+						}
 
 					this.setEntityDead();
 				}
