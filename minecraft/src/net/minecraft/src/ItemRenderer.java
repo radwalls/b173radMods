@@ -24,18 +24,21 @@ public class ItemRenderer {
 			GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
 			this.renderBlocksInstance.renderBlockOnInventory(Block.blocksList[var2.itemID], var2.getItemDamage(), var1.getEntityBrightness(1.0F));
 		} else {
-			if(var2.itemID < 256) {
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
-			} else {
-				GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/gui/items.png"));
-			}
+				boolean var18 = var2.itemID == Item.spyglass.shiftedIndex;
+				if(var2.itemID < 256) {
+					GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/terrain.png"));
+				} else if(var18) {
+					GL11.glBindTexture(GL11.GL_TEXTURE_2D, SpyglassIconTexture.getTextureId(this.mc.renderEngine));
+				} else {
+					GL11.glBindTexture(GL11.GL_TEXTURE_2D, this.mc.renderEngine.getTexture("/gui/items.png"));
+				}
 
-			Tessellator var3 = Tessellator.instance;
-			int var4 = var1.getItemIcon(var2);
-			float var5 = ((float)(var4 % 16 * 16) + 0.0F) / 256.0F;
-			float var6 = ((float)(var4 % 16 * 16) + 15.99F) / 256.0F;
-			float var7 = ((float)(var4 / 16 * 16) + 0.0F) / 256.0F;
-			float var8 = ((float)(var4 / 16 * 16) + 15.99F) / 256.0F;
+				Tessellator var3 = Tessellator.instance;
+				int var4 = var1.getItemIcon(var2);
+				float var5 = var18 ? 0.0F : ((float)(var4 % 16 * 16) + 0.0F) / 256.0F;
+				float var6 = var18 ? 1.0F : ((float)(var4 % 16 * 16) + 15.99F) / 256.0F;
+				float var7 = var18 ? 0.0F : ((float)(var4 / 16 * 16) + 0.0F) / 256.0F;
+				float var8 = var18 ? 1.0F : ((float)(var4 / 16 * 16) + 15.99F) / 256.0F;
 			float var9 = 1.0F;
 			float var10 = 0.0F;
 			float var11 = 0.3F;
