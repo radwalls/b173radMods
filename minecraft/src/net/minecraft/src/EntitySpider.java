@@ -17,6 +17,10 @@ public class EntitySpider extends EntityMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.redWaveMob) {
+			return this.worldObj.getClosestPlayerToEntity(this, 256.0D);
+		}
+
 		float var1 = this.getEntityBrightness(1.0F);
 		if(var1 < 0.5F) {
 			double var2 = 16.0D;
