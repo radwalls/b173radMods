@@ -49,6 +49,7 @@ public class GameSettings {
 	public float field_22272_F = 1.0F;
 	public float field_22271_G = 1.0F;
 	public int guiScale = 0;
+	public float cameraSmoothing = 0.0F;
 
 	public GameSettings(Minecraft var1, File var2) {
 		this.mc = var1;
@@ -86,6 +87,10 @@ public class GameSettings {
 
 		if(var1 == EnumOptions.SENSITIVITY) {
 			this.mouseSensitivity = var2;
+		}
+
+		if(var1 == EnumOptions.CAMERA_SMOOTHING) {
+			this.cameraSmoothing = var2;
 		}
 
 	}
@@ -139,7 +144,7 @@ public class GameSettings {
 	}
 
 	public float getOptionFloatValue(EnumOptions var1) {
-		return var1 == EnumOptions.MUSIC ? this.musicVolume : (var1 == EnumOptions.SOUND ? this.soundVolume : (var1 == EnumOptions.SENSITIVITY ? this.mouseSensitivity : 0.0F));
+		return var1 == EnumOptions.MUSIC ? this.musicVolume : (var1 == EnumOptions.SOUND ? this.soundVolume : (var1 == EnumOptions.SENSITIVITY ? this.mouseSensitivity : (var1 == EnumOptions.CAMERA_SMOOTHING ? this.cameraSmoothing : 0.0F)));
 	}
 
 	public boolean getOptionOrdinalValue(EnumOptions var1) {
@@ -164,7 +169,15 @@ public class GameSettings {
 		String var3 = var2.translateKey(var1.getEnumString()) + ": ";
 		if(var1.getEnumFloat()) {
 			float var5 = this.getOptionFloatValue(var1);
-			return var1 == EnumOptions.SENSITIVITY ? (var5 == 0.0F ? var3 + var2.translateKey("options.sensitivity.min") : (var5 == 1.0F ? var3 + var2.translateKey("options.sensitivity.max") : var3 + (int)(var5 * 200.0F) + "%")) : (var5 == 0.0F ? var3 + var2.translateKey("options.off") : var3 + (int)(var5 * 100.0F) + "%");
+			if(var1 == EnumOptions.SENSITIVITY) {
+				return var5 == 0.0F ? var3 + var2.translateKey("options.sensitivity.min") : (var5 == 1.0F ? var3 + var2.translateKey("options.sensitivity.max") : var3 + (int)(var5 * 200.0F) + "%");
+			}
+
+			if(var1 == EnumOptions.CAMERA_SMOOTHING) {
+				return var3 + (int)(var5 * 100.0F) + "%";
+			}
+
+			return var5 == 0.0F ? var3 + var2.translateKey("options.off") : var3 + (int)(var5 * 100.0F) + "%";
 		} else if(var1.getEnumBoolean()) {
 			boolean var4 = this.getOptionOrdinalValue(var1);
 			return var4 ? var3 + var2.translateKey("options.on") : var3 + var2.translateKey("options.off");
@@ -201,6 +214,10 @@ public class GameSettings {
 
 					if(var3[0].equals("mouseSensitivity")) {
 						this.mouseSensitivity = this.parseFloat(var3[1]);
+					}
+
+					if(var3[0].equals("cameraSmoothing")) {
+						this.cameraSmoothing = this.parseFloat(var3[1]);
 					}
 
 					if(var3[0].equals("invertYMouse")) {
@@ -278,6 +295,7 @@ public class GameSettings {
 			var1.println("sound:" + this.soundVolume);
 			var1.println("invertYMouse:" + this.invertMouse);
 			var1.println("mouseSensitivity:" + this.mouseSensitivity);
+			var1.println("cameraSmoothing:" + this.cameraSmoothing);
 			var1.println("viewDistance:" + this.renderDistance);
 			var1.println("guiScale:" + this.guiScale);
 			var1.println("bobView:" + this.viewBobbing);
