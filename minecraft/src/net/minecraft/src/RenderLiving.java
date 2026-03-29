@@ -156,7 +156,7 @@ public class RenderLiving extends Render {
 	}
 
 	protected int getColorMultiplier(EntityLiving var1, float var2, float var3) {
-		return 0;
+		return RedWaveSystem.getRedWaveColorMultiplier(var1);
 	}
 
 	protected void preRenderCallback(EntityLiving var1, float var2) {

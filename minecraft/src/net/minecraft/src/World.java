@@ -1768,6 +1768,7 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		RedWaveSystem.onWorldTick(this);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
 	}
@@ -2369,6 +2370,7 @@ public class World implements IBlockAccess {
 			EntityPlayer var2 = (EntityPlayer)var1.next();
 			if(var2.isPlayerSleeping()) {
 				var2.wakeUpPlayer(false, false, true);
+				RedWaveSystem.onPlayerWokeAfterNight(this, var2);
 			}
 		}
 
