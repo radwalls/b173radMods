@@ -9,6 +9,14 @@ public class EntityCreeper extends EntityMob {
 		this.texture = "/mob/creeper.png";
 	}
 
+	public void onLivingUpdate() {
+		if(RedWaveSystem.isRedWaveCreeper(this)) {
+			this.moveSpeed = 0.45F;
+		}
+
+		super.onLivingUpdate();
+	}
+
 	protected void entityInit() {
 		super.entityInit();
 		this.dataWatcher.addObject(16, Byte.valueOf((byte)-1));
@@ -95,12 +103,12 @@ public class EntityCreeper extends EntityMob {
 				}
 
 				this.setCreeperState(1);
-				++this.timeSinceIgnited;
-				if(this.timeSinceIgnited >= 30) {
+				this.timeSinceIgnited += RedWaveSystem.isRedWaveCreeper(this) ? 2 : 1;
+				if(this.timeSinceIgnited >= (RedWaveSystem.isRedWaveCreeper(this) ? 22 : 30)) {
 					if(this.getPowered()) {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 6.0F);
+						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, RedWaveSystem.isRedWaveCreeper(this) ? 8.0F : 6.0F);
 					} else {
-						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, 3.0F);
+						this.worldObj.createExplosion(this, this.posX, this.posY, this.posZ, RedWaveSystem.isRedWaveCreeper(this) ? 5.0F : 3.0F);
 					}
 
 					this.setEntityDead();

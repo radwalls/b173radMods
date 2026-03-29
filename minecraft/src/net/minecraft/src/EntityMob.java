@@ -2,6 +2,8 @@ package net.minecraft.src;
 
 public class EntityMob extends EntityCreature implements IMob {
 	protected int attackStrength = 2;
+	public boolean redWaveMob = false;
+	public boolean redWaveCreeper = false;
 
 	public EntityMob(World var1) {
 		super(var1);
@@ -14,6 +16,7 @@ public class EntityMob extends EntityCreature implements IMob {
 			this.entityAge += 2;
 		}
 
+		RedWaveSystem.handleSiegeBehavior(this);
 		super.onLivingUpdate();
 	}
 
@@ -26,6 +29,11 @@ public class EntityMob extends EntityCreature implements IMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.redWaveMob) {
+			EntityPlayer var2 = this.worldObj.getClosestPlayerToEntity(this, 128.0D);
+			return var2;
+		}
+
 		EntityPlayer var1 = this.worldObj.getClosestPlayerToEntity(this, 16.0D);
 		return var1 != null && this.canEntityBeSeen(var1) ? var1 : null;
 	}
@@ -60,10 +68,14 @@ public class EntityMob extends EntityCreature implements IMob {
 
 	public void writeEntityToNBT(NBTTagCompound var1) {
 		super.writeEntityToNBT(var1);
+		var1.setBoolean("RedWaveMob", this.redWaveMob);
+		var1.setBoolean("RedWaveCreeper", this.redWaveCreeper);
 	}
 
 	public void readEntityFromNBT(NBTTagCompound var1) {
 		super.readEntityFromNBT(var1);
+		this.redWaveMob = var1.getBoolean("RedWaveMob");
+		this.redWaveCreeper = var1.getBoolean("RedWaveCreeper");
 	}
 
 	public boolean getCanSpawnHere() {
