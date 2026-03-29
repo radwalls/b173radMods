@@ -346,9 +346,10 @@ public class EntityRenderer {
 				var6 = -1;
 			}
 
-			if(this.mc.gameSettings.smoothCamera) {
-				var4 = this.mouseFilterXAxis.func_22386_a(var4, 0.05F * var3);
-				var5 = this.mouseFilterYAxis.func_22386_a(var5, 0.05F * var3);
+			float var7 = this.mc.gameSettings.smoothCamera ? 1.0F : this.mc.gameSettings.cameraSmoothing;
+			if(!this.mc.gameSettings.thirdPersonView && var7 > 0.0F) {
+				var4 = this.mouseFilterXAxis.func_22386_a(var4, 0.05F * var3 * var7);
+				var5 = this.mouseFilterYAxis.func_22386_a(var5, 0.05F * var3 * var7);
 			}
 
 			this.mc.thePlayer.func_346_d(var4, var5 * (float)var6);
