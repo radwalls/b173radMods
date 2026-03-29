@@ -29,6 +29,23 @@ public class RenderCreeper extends RenderLiving {
 
 	protected int updateCreeperColorMultiplier(EntityCreeper var1, float var2, float var3) {
 		float var5 = var1.setCreeperFlashTime(var3);
+		if(var1.isRedWaveMob()) {
+			int var6 = 130 + (int)(MathHelper.sin((float)var1.ticksExisted * 0.2F) * 20.0F);
+			if(var6 < 100) {
+				var6 = 100;
+			}
+
+			if(var6 > 220) {
+				var6 = 220;
+			}
+
+			if((int)(var5 * 10.0F) % 2 == 0) {
+				return var6 << 24 | 255 << 16 | 32 << 8 | 32;
+			}
+
+			return 200 << 24 | 255 << 16 | 80 << 8 | 80;
+		}
+
 		if((int)(var5 * 10.0F) % 2 == 0) {
 			return 0;
 		} else {

@@ -640,6 +640,10 @@ public abstract class EntityPlayer extends EntityLiving {
 			this.setPlayerSpawnCoordinate(this.bedChunkCoordinates);
 		}
 
+		if(!this.worldObj.multiplayerWorld && var3) {
+			this.worldObj.onPlayerWokeUpFromSleep(this);
+		}
+
 	}
 
 	private boolean isInBed() {

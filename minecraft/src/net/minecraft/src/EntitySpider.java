@@ -17,6 +17,10 @@ public class EntitySpider extends EntityMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.isRedWaveMob()) {
+			return this.worldObj.getClosestPlayerToEntity(this, 96.0D);
+		}
+
 		float var1 = this.getEntityBrightness(1.0F);
 		if(var1 < 0.5F) {
 			double var2 = 16.0D;
@@ -40,7 +44,7 @@ public class EntitySpider extends EntityMob {
 
 	protected void attackEntity(Entity var1, float var2) {
 		float var3 = this.getEntityBrightness(1.0F);
-		if(var3 > 0.5F && this.rand.nextInt(100) == 0) {
+		if(!this.isRedWaveMob() && var3 > 0.5F && this.rand.nextInt(100) == 0) {
 			this.playerToAttack = null;
 		} else {
 			if(var2 > 2.0F && var2 < 6.0F && this.rand.nextInt(10) == 0) {
