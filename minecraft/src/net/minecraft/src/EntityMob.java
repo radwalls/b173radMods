@@ -6,6 +6,9 @@ public class EntityMob extends EntityCreature implements IMob {
 	public boolean redWaveCreeper = false;
 	public int redWaveLevel = 0;
 	public int redWaveBreakProgress = 0;
+	public int redWaveBreakX = 0;
+	public int redWaveBreakY = 0;
+	public int redWaveBreakZ = 0;
 
 	public EntityMob(World var1) {
 		super(var1);

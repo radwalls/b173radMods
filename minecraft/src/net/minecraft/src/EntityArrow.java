@@ -176,6 +176,9 @@ public class EntityArrow extends Entity {
 					this.yTile = var3.blockY;
 					this.zTile = var3.blockZ;
 					this.inTile = this.worldObj.getBlockId(this.xTile, this.yTile, this.zTile);
+					if(this.owner instanceof EntityMob && RedWaveSystem.isRedWaveMob((EntityLiving)this.owner)) {
+						RedWaveSystem.onWaveMobProjectileBlockHit((EntityMob)this.owner, this.xTile, this.yTile, this.zTile);
+					}
 					this.field_28019_h = this.worldObj.getBlockMetadata(this.xTile, this.yTile, this.zTile);
 					this.motionX = (double)((float)(var3.hitVec.xCoord - this.posX));
 					this.motionY = (double)((float)(var3.hitVec.yCoord - this.posY));

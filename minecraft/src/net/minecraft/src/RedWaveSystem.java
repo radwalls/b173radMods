@@ -71,13 +71,36 @@ public final class RedWaveSystem {
 
 		if((var0.ticksExisted + var0.entityId) % 10 == 0) {
 			EntityPlayer var1 = var0.worldObj.getClosestPlayerToEntity(var0, -1.0D);
-			if(var1 != null) {
+			if(var1 != null && var0.getDistanceSqToEntity(var1) < 2304.0D) {
 				var0.setTarget(var1);
 				var0.setPathToEntity(var0.worldObj.getPathToEntity(var0, var1, 64.0F));
+			} else {
+				ChunkCoordinates var2 = getNearestBuildTarget(var0.worldObj, var0);
+				if(var2 != null) {
+					var0.setPathToEntity(var0.worldObj.getEntityPathToXYZ(var0, var2.posX, var2.posY, var2.posZ, 64.0F));
+				}
 			}
 		}
 
 		tryBreakIntoStructures(var0);
+	}
+
+	public static void onWaveMobProjectileBlockHit(EntityMob var0, int var1, int var2, int var3) {
+		if(!var0.redWaveMob || var0.worldObj.multiplayerWorld || !var0.isEntityAlive()) {
+			return;
+		}
+
+		World var4 = var0.worldObj;
+		int var5 = var4.getBlockId(var1, var2, var3);
+		if(var5 <= 0 || var5 == Block.bedrock.blockID) {
+			return;
+		}
+
+		if(getClusterStrength(var4, var1, var2, var3, 4) < 10) {
+			return;
+		}
+
+		applyBlockDamage(var0, var1, var2, var3, var5, true);
 	}
 
 	public static boolean isRedWaveMob(EntityLiving var0) {
@@ -133,7 +156,7 @@ public final class RedWaveSystem {
 	}
 
 	private static EntityMob createWaveMob(World var0, int var1) {
-		int var2 = var0.rand.nextInt(10);
+		int var2 = var0.rand.nextInt(8);
 		switch(var2) {
 		case 0:
 			return new EntityZombie(var0);
@@ -143,10 +166,11 @@ public final class RedWaveSystem {
 			return new EntitySkeleton(var0);
 		case 4:
 		case 5:
-		case 6:
 			return new EntitySpider(var0);
+		case 6:
+			return new EntityCreeper(var0);
 		default:
-			return var1 % 8 == 0 ? new EntityCreeper(var0) : new EntityZombie(var0);
+			return var1 % 4 == 0 ? new EntityCreeper(var0) : new EntityZombie(var0);
 		}
 	}
 
@@ -197,52 +221,87 @@ public final class RedWaveSystem {
 	}
 
 	private static void tryBreakIntoStructures(EntityMob var0) {
-		Entity var1 = var0.getTarget();
-		if(!(var1 instanceof EntityPlayer)) {
+		if(!var0.isCollidedHorizontally) {
 			return;
 		}
 
-		World var2 = var0.worldObj;
-		int var3 = MathHelper.floor_double(var0.posX);
-		int var4 = MathHelper.floor_double(var0.posY + 0.2D);
-		int var5 = MathHelper.floor_double(var0.posZ);
-		Vec3D var6 = Vec3D.createVector(var0.posX, var0.posY + (double)var0.getEyeHeight(), var0.posZ);
-		Vec3D var7 = Vec3D.createVector(var1.posX, var1.posY + (double)var1.getEyeHeight(), var1.posZ);
-		MovingObjectPosition var8 = var2.rayTraceBlocks(var6, var7);
-		int var9 = var3;
-		int var10 = var4;
-		int var11 = var5;
-		if(var8 != null) {
-			var9 = var8.blockX;
-			var10 = var8.blockY;
-			var11 = var8.blockZ;
-		} else if(var0.isCollidedHorizontally) {
-			var9 = MathHelper.floor_double(var0.posX + var0.motionX * 2.0D);
-			var11 = MathHelper.floor_double(var0.posZ + var0.motionZ * 2.0D);
-		} else {
+		World var1 = var0.worldObj;
+		int var2 = MathHelper.floor_double(var0.posX + (double)(-MathHelper.sin(var0.rotationYaw / 180.0F * (float)Math.PI) * 0.8F));
+		int var3 = MathHelper.floor_double(var0.posY + 0.5D);
+		int var4 = MathHelper.floor_double(var0.posZ + (double)(MathHelper.cos(var0.rotationYaw / 180.0F * (float)Math.PI) * 0.8F));
+		int var5 = var1.getBlockId(var2, var3, var4);
+		if(var5 <= 0 || var5 == Block.bedrock.blockID) {
+			var3 = MathHelper.floor_double(var0.posY);
+			var5 = var1.getBlockId(var2, var3, var4);
+		}
+
+		if(var5 <= 0 || var5 == Block.bedrock.blockID) {
 			return;
 		}
 
-		int var12 = var2.getBlockId(var9, var10, var11);
-		if(var12 <= 0 || var12 == Block.bedrock.blockID) {
+		if(var0.getDistanceSq((double)var2 + 0.5D, (double)var3 + 0.5D, (double)var4 + 0.5D) > 2.89D) {
 			return;
 		}
 
-		int var13 = getClusterStrength(var2, var9, var10, var11, 4);
-		if(var13 < 10 && !var0.redWaveCreeper) {
+		if(getClusterStrength(var1, var2, var3, var4, 4) < 10) {
 			return;
 		}
 
-		++var0.redWaveBreakProgress;
-		int var14 = var0.redWaveCreeper ? 12 : 55;
-		if(var13 > 25) {
-			var14 -= 8;
+		if(var0 instanceof EntitySkeleton) {
+			return;
 		}
 
-		if(var0.redWaveBreakProgress >= var14) {
+		applyBlockDamage(var0, var2, var3, var4, var5, false);
+	}
+
+	private static void applyBlockDamage(EntityMob var0, int var1, int var2, int var3, int var4, boolean var5) {
+		RedWaveState var6 = getState(var0.worldObj);
+		Long var7 = Long.valueOf(pack(var1, var2, var3));
+		if(var0.redWaveBreakX != var1 || var0.redWaveBreakY != var2 || var0.redWaveBreakZ != var3) {
+			var0.redWaveBreakX = var1;
+			var0.redWaveBreakY = var2;
+			var0.redWaveBreakZ = var3;
 			var0.redWaveBreakProgress = 0;
-			var2.setBlockWithNotify(var9, var10, var11, 0);
 		}
+
+		int var8 = getRequiredHits(var0, var4, var5);
+		if(var8 <= 0) {
+			return;
+		}
+
+		Integer var9 = (Integer)var6.blockHitProgress.get(var7);
+		int var10 = var9 == null ? 0 : var9.intValue();
+		++var10;
+		var6.blockHitProgress.put(var7, Integer.valueOf(var10));
+		if(var10 >= var8) {
+			var6.blockHitProgress.remove(var7);
+			var0.worldObj.setBlockWithNotify(var1, var2, var3, 0);
+		}
+	}
+
+	private static int getRequiredHits(EntityMob var0, int var1, boolean var2) {
+		if(var0 instanceof EntitySkeleton && !var2) {
+			return -1;
+		}
+
+		Block var3 = Block.blocksList[var1];
+		Material var4 = var3 == null ? Material.rock : var3.blockMaterial;
+		int var5;
+		if(var1 == Block.cobblestone.blockID || var1 == Block.cobblestoneMossy.blockID) {
+			var5 = 10;
+		} else if(var4 == Material.wood) {
+			var5 = 5;
+		} else if(var4 == Material.rock || var4 == Material.iron) {
+			var5 = 12;
+		} else {
+			var5 = 4;
+		}
+
+		if(var0.redWaveCreeper) {
+			var5 = Math.max(2, var5 / 2);
+		}
+
+		return var5;
 	}
 
 	private static int getClusterStrength(World var0, int var1, int var2, int var3, int var4) {
@@ -260,6 +319,39 @@ public final class RedWaveSystem {
 		}
 
 		return var6;
+	}
+
+	private static ChunkCoordinates getNearestBuildTarget(World var0, EntityMob var1) {
+		RedWaveState var2 = getState(var0);
+		if(var2.playerBuiltBlocks.isEmpty()) {
+			return null;
+		}
+
+		Long var3 = null;
+		double var4 = Double.MAX_VALUE;
+		Iterator var6 = var2.playerBuiltBlocks.iterator();
+
+		while(var6.hasNext()) {
+			Long var7 = (Long)var6.next();
+			int var8 = unpackX(var7.longValue());
+			int var9 = unpackY(var7.longValue());
+			int var10 = unpackZ(var7.longValue());
+			if(var0.getBlockId(var8, var9, var10) <= 0) {
+				continue;
+			}
+
+			double var11 = var1.getDistanceSq((double)var8 + 0.5D, (double)var9 + 0.5D, (double)var10 + 0.5D);
+			if(var11 < var4) {
+				var4 = var11;
+				var3 = var7;
+			}
+		}
+
+		if(var3 == null) {
+			return null;
+		}
+
+		return new ChunkCoordinates(unpackX(var3.longValue()), unpackY(var3.longValue()), unpackZ(var3.longValue()));
 	}
 
 	private static String buildDirectionList(EnumSet var0) {
@@ -312,12 +404,25 @@ public final class RedWaveSystem {
 		return var3 | var5 | var7;
 	}
 
+	private static int unpackX(long var0) {
+		return (int)(var0 >> 38);
+	}
+
+	private static int unpackY(long var0) {
+		return (int)(var0 >> 26 & 4095L);
+	}
+
+	private static int unpackZ(long var0) {
+		return (int)(var0 << 38 >> 38);
+	}
+
 	private static class RedWaveState {
 		public boolean firstWavePendingSleep = true;
 		public int waveCount = 0;
 		public long lastWaveDay = -9999L;
 		public final EnumSet lastWaveDirections = EnumSet.noneOf(Direction.class);
 		public final HashSet playerBuiltBlocks = new HashSet();
+		public final HashMap blockHitProgress = new HashMap();
 	}
 
 	private static enum Direction {
