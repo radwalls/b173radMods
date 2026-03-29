@@ -7,7 +7,7 @@ public class BlockDispenser extends BlockContainer {
 
 	protected BlockDispenser(int var1) {
 		super(var1, Material.rock);
-		this.blockIndexInTexture = 45;
+		this.blockIndexInTexture = 37;
 	}
 
 	public int tickRate() {
@@ -75,6 +75,34 @@ public class BlockDispenser extends BlockContainer {
 		}
 	}
 
+	private boolean isRepeaterBlock(int var1) {
+		return var1 == Block.redstoneRepeaterIdle.blockID || var1 == Block.redstoneRepeaterActive.blockID;
+	}
+
+	private EntityTNTPrimed createCannonball(World var1, double var2, double var4, double var6, int var8, int var9, int var10, int var11, int var12, Random var13) {
+		EntityTNTPrimed var14 = new EntityTNTPrimed(var1, var2, var4, var6);
+		int var15 = -var12;
+		int var16 = var11;
+		int var17 = var12;
+		int var18 = -var11;
+		float var19 = 0.35F;
+		if(this.isRepeaterBlock(var1.getBlockId(var8 + var15, var9, var10 + var16))) {
+			var19 = 0.6F;
+		}
+
+		if(this.isRepeaterBlock(var1.getBlockId(var8 + var17, var9, var10 + var18))) {
+			var19 = 0.12F;
+		}
+
+		float var20 = 2.6F;
+		var14.motionX = (double)((float)var11 * var20 + (float)(var13.nextGaussian() * (double)0.03F));
+		var14.motionY = (double)(var19 + (float)(var13.nextGaussian() * (double)0.02F));
+		var14.motionZ = (double)((float)var12 * var20 + (float)(var13.nextGaussian() * (double)0.03F));
+		var14.fuse = 50;
+		var14.setExplosionPower(8.0F);
+		return var14;
+	}
+
 	private void dispenseItem(World var1, int var2, int var3, int var4, Random var5) {
 		int var6 = var1.getBlockMetadata(var2, var3, var4);
 		byte var9 = 0;
@@ -113,16 +141,20 @@ public class BlockDispenser extends BlockContainer {
 				var23.setSnowballHeading((double)var9, (double)0.1F, (double)var10, 1.1F, 6.0F);
 				var1.entityJoinedWorld(var23);
 				var1.func_28106_e(1002, var2, var3, var4, 0);
-			} else {
-				EntityItem var24 = new EntityItem(var1, var13, var15 - 0.3D, var17, var12);
-				double var20 = var5.nextDouble() * 0.1D + 0.2D;
-				var24.motionX = (double)var9 * var20;
-				var24.motionY = (double)0.2F;
-				var24.motionZ = (double)var10 * var20;
-				var24.motionX += var5.nextGaussian() * (double)0.0075F * 6.0D;
-				var24.motionY += var5.nextGaussian() * (double)0.0075F * 6.0D;
-				var24.motionZ += var5.nextGaussian() * (double)0.0075F * 6.0D;
+			} else if(var12.itemID == Block.tnt.blockID) {
+				EntityTNTPrimed var24 = this.createCannonball(var1, var13, var15, var17, var2, var3, var4, var9, var10, var5);
 				var1.entityJoinedWorld(var24);
+				var1.func_28106_e(1002, var2, var3, var4, 0);
+			} else {
+				EntityItem var25 = new EntityItem(var1, var13, var15 - 0.3D, var17, var12);
+				double var20 = var5.nextDouble() * 0.1D + 0.2D;
+				var25.motionX = (double)var9 * var20;
+				var25.motionY = (double)0.2F;
+				var25.motionZ = (double)var10 * var20;
+				var25.motionX += var5.nextGaussian() * (double)0.0075F * 6.0D;
+				var25.motionY += var5.nextGaussian() * (double)0.0075F * 6.0D;
+				var25.motionZ += var5.nextGaussian() * (double)0.0075F * 6.0D;
+				var1.entityJoinedWorld(var25);
 				var1.func_28106_e(1000, var2, var3, var4, 0);
 			}
 
