@@ -28,6 +28,10 @@ public class RenderCreeper extends RenderLiving {
 	}
 
 	protected int updateCreeperColorMultiplier(EntityCreeper var1, float var2, float var3) {
+		if(RedWaveSystem.isRedWaveMob(var1)) {
+			return -1761673216;
+		}
+
 		float var5 = var1.setCreeperFlashTime(var3);
 		if((int)(var5 * 10.0F) % 2 == 0) {
 			return 0;
