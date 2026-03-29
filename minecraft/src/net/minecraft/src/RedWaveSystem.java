@@ -11,6 +11,8 @@ import java.util.Random;
 public final class RedWaveSystem {
 	private static final HashMap worldStates = new HashMap();
 	private static final int WAVE_INTERVAL_DAYS = 2;
+	private static final int PLAYER_AGGRO_RANGE = 28;
+	private static final int BUILD_AGGRO_RANGE = 96;
 
 	private RedWaveSystem() {
 	}
@@ -71,9 +73,12 @@ public final class RedWaveSystem {
 
 		if((var0.ticksExisted + var0.entityId) % 10 == 0) {
 			EntityPlayer var1 = var0.worldObj.getClosestPlayerToEntity(var0, -1.0D);
-			if(var1 != null) {
+			if(var1 != null && var0.getDistanceToEntity(var1) <= (float)PLAYER_AGGRO_RANGE) {
 				var0.setTarget(var1);
 				var0.setPathToEntity(var0.worldObj.getPathToEntity(var0, var1, 64.0F));
+			} else {
+				var0.setTarget((Entity)null);
+				seekNearestBuildCluster(var0);
 			}
 		}
 
@@ -197,52 +202,158 @@ public final class RedWaveSystem {
 	}
 
 	private static void tryBreakIntoStructures(EntityMob var0) {
-		Entity var1 = var0.getTarget();
-		if(!(var1 instanceof EntityPlayer)) {
+		World var1 = var0.worldObj;
+		long var2 = selectAttackableBlock(var0);
+		if(var2 == -1L) {
+			var0.redWaveBreakProgress = 0;
 			return;
 		}
 
-		World var2 = var0.worldObj;
-		int var3 = MathHelper.floor_double(var0.posX);
-		int var4 = MathHelper.floor_double(var0.posY + 0.2D);
-		int var5 = MathHelper.floor_double(var0.posZ);
-		Vec3D var6 = Vec3D.createVector(var0.posX, var0.posY + (double)var0.getEyeHeight(), var0.posZ);
-		Vec3D var7 = Vec3D.createVector(var1.posX, var1.posY + (double)var1.getEyeHeight(), var1.posZ);
-		MovingObjectPosition var8 = var2.rayTraceBlocks(var6, var7);
-		int var9 = var3;
-		int var10 = var4;
-		int var11 = var5;
-		if(var8 != null) {
-			var9 = var8.blockX;
-			var10 = var8.blockY;
-			var11 = var8.blockZ;
-		} else if(var0.isCollidedHorizontally) {
-			var9 = MathHelper.floor_double(var0.posX + var0.motionX * 2.0D);
-			var11 = MathHelper.floor_double(var0.posZ + var0.motionZ * 2.0D);
-		} else {
+		int var3 = unpackX(var2);
+		int var4 = unpackY(var2);
+		int var5 = unpackZ(var2);
+		int var6 = var1.getBlockId(var3, var4, var5);
+		if(var6 <= 0 || var6 == Block.bedrock.blockID) {
+			var0.redWaveBreakProgress = 0;
 			return;
 		}
 
-		int var12 = var2.getBlockId(var9, var10, var11);
-		if(var12 <= 0 || var12 == Block.bedrock.blockID) {
+		if(!isPlayerBuiltBlock(var1, var3, var4, var5)) {
+			var0.redWaveBreakProgress = 0;
 			return;
 		}
 
-		int var13 = getClusterStrength(var2, var9, var10, var11, 4);
-		if(var13 < 10 && !var0.redWaveCreeper) {
+		if(!isValidAttackContact(var0, var3, var4, var5)) {
+			var0.redWaveBreakProgress = 0;
 			return;
 		}
 
 		++var0.redWaveBreakProgress;
-		int var14 = var0.redWaveCreeper ? 12 : 55;
-		if(var13 > 25) {
-			var14 -= 8;
+		int var7 = getRequiredHits(var0, var6);
+		if(var0.redWaveBreakProgress >= var7) {
+			var0.redWaveBreakProgress = 0;
+			var1.setBlockWithNotify(var3, var4, var5, 0);
+		}
+	}
+
+	private static long selectAttackableBlock(EntityMob var0) {
+		Entity var1 = var0.getTarget();
+		if(var1 instanceof EntityPlayer) {
+			return getBlockBetweenMobAndTarget(var0, (EntityPlayer)var1);
 		}
 
-		if(var0.redWaveBreakProgress >= var14) {
-			var0.redWaveBreakProgress = 0;
-			var2.setBlockWithNotify(var9, var10, var11, 0);
+		return getFrontCollisionBlock(var0);
+	}
+
+	private static long getBlockBetweenMobAndTarget(EntityMob var0, EntityPlayer var1) {
+		World var2 = var0.worldObj;
+		Vec3D var3 = Vec3D.createVector(var0.posX, var0.posY + (double)var0.getEyeHeight(), var0.posZ);
+		Vec3D var4 = Vec3D.createVector(var1.posX, var1.posY + (double)var1.getEyeHeight(), var1.posZ);
+		MovingObjectPosition var5 = var2.rayTraceBlocks(var3, var4);
+		return var5 == null ? -1L : pack(var5.blockX, var5.blockY, var5.blockZ);
+	}
+
+	private static long getFrontCollisionBlock(EntityMob var0) {
+		if(!var0.isCollidedHorizontally) {
+			return -1L;
 		}
+
+		int var1 = MathHelper.floor_double(var0.posX + var0.motionX * 2.0D);
+		int var2 = MathHelper.floor_double(var0.posY + 0.2D);
+		int var3 = MathHelper.floor_double(var0.posZ + var0.motionZ * 2.0D);
+		return pack(var1, var2, var3);
+	}
+
+	private static boolean isValidAttackContact(EntityMob var0, int var1, int var2, int var3) {
+		double var4 = (double)var1 + 0.5D;
+		double var6 = (double)var2 + 0.5D;
+		double var8 = (double)var3 + 0.5D;
+		double var10 = var0.getDistanceSq(var4, var6, var8);
+		if(var0 instanceof EntitySkeleton) {
+			return var10 <= 225.0D;
+		}
+
+		return var10 <= 4.0D && var0.isCollidedHorizontally;
+	}
+
+	private static int getRequiredHits(EntityMob var0, int var1) {
+		if(var0.redWaveCreeper) {
+			return 1;
+		}
+
+		Block var2 = Block.blocksList[var1];
+		if(var2 == null) {
+			return 6;
+		}
+
+		Material var3 = var2.blockMaterial;
+		if(var3 == Material.wood || var1 == Block.planks.blockID || var1 == Block.wood.blockID) {
+			return 5;
+		}
+
+		if(var3 == Material.rock || var1 == Block.cobblestone.blockID || var1 == Block.stone.blockID) {
+			return 10;
+		}
+
+		return 7;
+	}
+
+	private static boolean isPlayerBuiltBlock(World var0, int var1, int var2, int var3) {
+		RedWaveState var4 = getState(var0);
+		return var4.playerBuiltBlocks.contains(Long.valueOf(pack(var1, var2, var3)));
+	}
+
+	private static void seekNearestBuildCluster(EntityMob var0) {
+		long var1 = findNearestPlayerBuiltBlock(var0.worldObj, var0, BUILD_AGGRO_RANGE);
+		if(var1 == -1L) {
+			return;
+		}
+
+		int var2 = unpackX(var1);
+		int var3 = unpackY(var1);
+		int var4 = unpackZ(var1);
+		var0.setPathToEntity(var0.worldObj.getEntityPathToXYZ(var0, var2, var3, var4, 64.0F));
+	}
+
+	private static long findNearestPlayerBuiltBlock(World var0, EntityMob var1, int var2) {
+		RedWaveState var3 = getState(var0);
+		if(var3.playerBuiltBlocks.isEmpty()) {
+			return -1L;
+		}
+
+		double var4 = (double)(var2 * var2);
+		double var6 = Double.MAX_VALUE;
+		long var8 = 0L;
+		Iterator var10 = var3.playerBuiltBlocks.iterator();
+
+		while(var10.hasNext()) {
+			Long var11 = (Long)var10.next();
+			int var12 = unpackX(var11.longValue());
+			int var13 = unpackY(var11.longValue());
+			int var14 = unpackZ(var11.longValue());
+			double var15 = var1.getDistanceSq((double)var12 + 0.5D, (double)var13 + 0.5D, (double)var14 + 0.5D);
+			if(var15 <= var4 && var15 < var6) {
+				var6 = var15;
+				var8 = var11.longValue();
+			}
+		}
+
+		return var6 == Double.MAX_VALUE ? -1L : var8;
+	}
+
+	private static int unpackX(long var0) {
+		int var2 = (int)(var0 >> 38);
+		return var2 >= 16777216 ? var2 - 33554432 : var2;
+	}
+
+	private static int unpackY(long var0) {
+		int var2 = (int)(var0 >> 26 & 4095L);
+		return var2 >= 2048 ? var2 - 4096 : var2;
+	}
+
+	private static int unpackZ(long var0) {
+		int var2 = (int)(var0 & 67108863L);
+		return var2 >= 33554432 ? var2 - 67108864 : var2;
 	}
 
 	private static int getClusterStrength(World var0, int var1, int var2, int var3, int var4) {
