@@ -17,6 +17,10 @@ public class EntitySpider extends EntityMob {
 	}
 
 	protected Entity findPlayerToAttack() {
+		if(this.isRedWaveMob()) {
+			return this.worldObj.getClosestPlayerToEntity(this, 96.0D);
+		}
+
 		float var1 = this.getEntityBrightness(1.0F);
 		if(var1 < 0.5F) {
 			double var2 = 16.0D;
@@ -39,6 +43,23 @@ public class EntitySpider extends EntityMob {
 	}
 
 	protected void attackEntity(Entity var1, float var2) {
+		if(this.isRedWaveMob()) {
+			if(var2 > 2.0F && var2 < 8.0F && this.rand.nextInt(6) == 0) {
+				if(this.onGround) {
+					double var4 = var1.posX - this.posX;
+					double var6 = var1.posZ - this.posZ;
+					float var8 = MathHelper.sqrt_double(var4 * var4 + var6 * var6);
+					this.motionX = var4 / (double)var8 * 0.5D * (double)0.95F + this.motionX * (double)0.2F;
+					this.motionZ = var6 / (double)var8 * 0.5D * (double)0.95F + this.motionZ * (double)0.2F;
+					this.motionY = (double)0.5F;
+				}
+			} else {
+				super.attackEntity(var1, var2);
+			}
+
+			return;
+		}
+
 		float var3 = this.getEntityBrightness(1.0F);
 		if(var3 > 0.5F && this.rand.nextInt(100) == 0) {
 			this.playerToAttack = null;

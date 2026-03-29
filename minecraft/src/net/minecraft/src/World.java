@@ -1768,6 +1768,7 @@ public class World implements IBlockAccess {
 		}
 
 		this.worldInfo.setWorldTime(var2);
+		RedWaveSystem.onWorldTick(this);
 		this.TickUpdates(false);
 		this.updateBlocksAndPlayCaveSounds();
 	}
